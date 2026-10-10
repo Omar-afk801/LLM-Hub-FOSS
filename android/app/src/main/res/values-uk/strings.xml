@@ -77,7 +77,7 @@
     <string name="ai_thinking">AI думає…</string>
     <string name="thinking_label">Міркування</string>
     <string name="thinking_tokens">Міркування (%1$d токенів)</string>
-    <string name="version_number">Версія 4.4.0</string>
+    <string name="version_number">Версія 4.5.0</string>
     <string name="app_version">Версія застосунку</string>
 
     <!-- Terms of Service -->
@@ -1007,4 +1007,102 @@
     <string name="gguf_vulkan_setting">GPU-рушій GGUF</string>
     <string name="crash_recovery_title">Застосунок несподівано закрився</string>
     <string name="crash_recovery_message">Спробуйте завантажити меншу модель або використати ЦП.</string>
+    <string name="feature_photo_search">Instant Media Search</string>
+    <string name="feature_photo_search_desc">Organize and search your photos and videos locally with EmbeddingGemma 2</string>
+    <string name="feature_video_moment">Video Moment Finder</string>
+    <string name="feature_video_moment_desc">Search for moments in videos using natural language with EmbeddingGemma 2</string>
+    <string name="video_moment_onboarding_title">Search for a moment inside your videos</string>
+    <string name="video_moment_onboarding_desc">EmbeddingGemma 2 splits each video into 2 second windows, reads two frames and the audio in each window, then you can jump to the moment you describe.</string>
+    <string name="video_moment_all">Analyze all videos</string>
+    <string name="video_moment_pick">Select videos</string>
+    <string name="video_moment_hint">Describe a moment, e.g. cutting a cake</string>
+    <string name="video_moment_play">Play %1$s</string>
+    <string name="feature_audio_search">Пошук аудіо</string>
+    <string name="feature_audio_search_desc">Знаходьте моменти в аудіо за описом</string>
+    <string name="media_search_download_model">Завантажити EmbeddingGemma 2</string>
+    <string name="media_search_download_model_desc">Ця функція запускає EmbeddingGemma 2 на пристрої. Завантажте модель зі списку моделей, щоб почати.</string>
+    <string name="media_search_loading_model">Завантаження EmbeddingGemma 2…</string>
+    <string name="media_search_model_failed">Не вдалося завантажити EmbeddingGemma 2</string>
+    <string name="media_search_analyzing">Аналіз…</string>
+    <string name="media_search_paused">Аналіз призупинено</string>
+    <string name="media_search_progress">Проаналізовано %1$d з %2$d (%3$d%%)</string>
+    <string name="media_search_pause">Пауза</string>
+    <string name="media_search_resume">Продовжити</string>
+    <string name="media_search_incomplete_warning">Аналіз ще триває, тож частини результатів може не бути.</string>
+    <string name="media_search_no_results">Нічого не знайдено</string>
+    <string name="media_search_library">Медіатека</string>
+    <string name="media_search_clear">Очистити все й почати знову</string>
+    <string name="media_search_grant_access">Дозволити доступ</string>
+    <string name="photo_search_onboarding_title">Шукайте фото й відео, описуючи їх</string>
+    <string name="photo_search_onboarding_desc">EmbeddingGemma 2 аналізує фото й відео на цьому пристрої. Відео читається з першого й останнього кадру. Потім можна шукати звичайними словами або знаходити схоже. Нічого не залишає телефон.</string>
+    <string name="photo_search_all_photos">Аналізувати всі фото й відео</string>
+    <string name="photo_search_select_photos">Вибрати фото й відео</string>
+    <string name="photo_search_hint">Опишіть фото чи відео, наприклад собака на пляжі</string>
+    <string name="photo_search_find_similar">Знайти схожі фото</string>
+    <string name="photo_search_similar_results">Схожі фото</string>
+    <string name="photo_search_permission_denied">Для аналізу бібліотеки потрібен доступ до фото й відео.</string>
+    <string name="photo_search_count">Проаналізовано %1$d з %2$d фото</string>
+    <string name="audio_search_onboarding_title">Шукайте в аудіо за описом</string>
+    <string name="audio_search_onboarding_desc">EmbeddingGemma 2 ділить кожен запис на короткі моменти й аналізує їх на цьому пристрої, щоб одразу перейти до потрібного місця.</string>
+    <string name="audio_search_scan_device">Аналізувати аудіо пристрою</string>
+    <string name="audio_search_import">Імпортувати аудіофайли</string>
+    <string name="audio_search_hint">Опишіть звук, напр.: люди сміються</string>
+    <string name="audio_search_permission_denied">Для аналізу аудіо пристрою потрібен доступ до аудіо.</string>
+    <string name="audio_search_count">Проаналізовано %1$d з %2$d файлів</string>
+    <string name="audio_search_moment">Відтворити %1$s</string>
+
+    <!-- Supertonic 3 -->
+    <string name="supertonic_language">Мова озвучення</string>
+    <string name="supertonic_voice_download_failed">Не вдалося завантажити голос. Спробуйте ще раз.</string>
+    <string name="supertonic_model_unavailable">Supertonic 3 недоступний. Завершіть завантаження моделі або виберіть інший рушій озвучення в Налаштуваннях.</string>
+    <string name="supertonic_speech_failed">Помилка озвучення. Перевірте вибраний голос і виберіть підтримувану мову в Налаштуваннях.</string>
+
+    <!-- On-device PocketTTS.cpp voice cloning -->
+    <string name="pocket_voice_cloning">Клонування голосу · Pocket TTS</string>
+    <string name="pocket_voice_help">Запишіть тут або імпортуйте аудіо. Лише англійська. Імпортуйте чіткий запис WAV, MP3, FLAC, M4A/AAC або OGG тривалістю 3–30 секунд (до 20 МБ). Клонування повністю відбувається на пристрої. Вибір голосу вмикає Pocket TTS у всьому застосунку, крім Перекладача.</string>
+    <string name="pocket_model_required">Спочатку завантажте Pocket TTS на екрані завантаження моделей.</string>
+    <string name="pocket_cloning">Клонування голосу на пристрої…</string>
+    <string name="pocket_clone_failed">Не вдалося клонувати голос. Використайте чіткий запис мовлення WAV, MP3, FLAC, M4A/AAC або OGG тривалістю щонайменше 3 секунди.</string>
+    <string name="pocket_import_voice">Імпортувати та клонувати голос</string>
+    <string name="pocket_speech_failed">Не вдалося створити мовлення. Виберіть клонований голос Pocket TTS у Налаштуваннях.</string>
+
+    <!-- Microphone recording for local voice cloning -->
+    <string name="pocket_record_voice">Записати голос</string>
+    <string name="pocket_stop_and_clone">Зупинити та клонувати</string>
+    <string name="pocket_recording">Запис: %1$d / 30 с</string>
+    <string name="pocket_record_failed">Не вдалося записати або клонувати голос. Повторіть із чітким мовленням тривалістю щонайменше 3 секунди.</string>
+    <string name="pocket_microphone_required">Дозвольте доступ до мікрофона для запису голосу.</string>
+    <string name="pocket_recorded_voice">Запис %1$s</string>
+
+    <!-- Supertonic custom voice file import -->
+    <string name="supertonic_import_voice">Імпортувати голос JSON</string>
+    <string name="supertonic_import_failed">Не вдалося імпортувати голос. Виберіть JSON-файл стилю голосу Supertonic 3 (до 2 МБ).</string>
+
+    <!-- Vibecode local Codex agent -->
+    <string name="vibe_codex_mode">Режим Codex</string>
+    <string name="vibe_codex_description">Використовує вибрану локальну модель без входу в обліковий запис. Команди виконуються з дозволами Termux.</string>
+    <string name="vibe_codex_install">Встановити Codex у Termux</string>
+    <string name="vibe_codex_install_help">Увімкніть команди зовнішніх застосунків у Termux і встановіть Codex перед початком роботи.</string>
+    <string name="vibe_codex_installing">Встановлення Codex у Termux…</string>
+    <string name="vibe_codex_installed">Codex встановлено. Вибрана локальна модель готова до роботи.</string>
+    <string name="vibe_codex_requirements">Потрібен Android 10 або новіший та пристрій ARM64.</string>
+    <string name="vibe_codex_connection_error">Не вдалося підключитися до Codex у Termux.</string>
+    <string name="vibe_codex_model_error">Локальна модель не повернула коректну відповідь інструмента. Спробуйте модель для програмування або більший контекст.</string>
+    <string name="vibe_codex_conflict">Проєкт змінився поза Vibecode. Створені зміни залишаються в робочій папці Termux.</string>
+    <string name="vibe_codex_failed">Помилка Codex. Перевірте налаштування Termux, локальну модель і журнали застосунку.</string>
+    <string name="vibe_codex_folder_required">Перед використанням Codex відкрийте робочу папку.</string>
+    <string name="vibe_codex_approval">Codex запитує дозвіл</string>
+
+    <string name="vibe_codex_terminal">Термінал</string>
+    <string name="vibe_codex_running">Виконується</string>
+    <string name="vibe_codex_stopped">Зупинено</string>
+    <string name="vibe_codex_starting">Запуск Codex…</string>
+    <string name="vibe_codex_connecting">Підключення до Codex…</string>
+    <string name="vibe_codex_staging">Підготовка файлів проєкту…</string>
+    <string name="vibe_codex_generating">Локальна модель працює…</string>
+    <string name="vibe_codex_syncing">Застосування змін проєкту…</string>
+    <string name="vibe_codex_step_progress">Крок агента %1$d · спроба %2$d · згенеровано символів: %3$d</string>
+    <string name="vibe_codex_saved_verified">%1$s збережено, вміст перевірено.</string>
+    <string name="tts_voice_name">Назва голосу</string>
+    <string name="tts_voice_rename_failed">Не вдалося перейменувати цей голос. Спробуйте ще раз.</string>
 </resources>

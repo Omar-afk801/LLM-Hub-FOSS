@@ -78,7 +78,7 @@
     <string name="ai_thinking">AI sedang berpikir...</string>
     <string name="thinking_label">Pemikiran</string>
     <string name="thinking_tokens">Pemikiran (%1$d token)</string>
-    <string name="version_number">Versi 4.4.0</string>
+    <string name="version_number">Versi 4.5.0</string>
     <string name="app_version">Versi Aplikasi</string>
     
     <!-- Terms of Service -->
@@ -1009,4 +1009,102 @@
     <string name="gguf_vulkan_setting">Backend GPU GGUF</string>
     <string name="crash_recovery_title">Aplikasi tertutup tiba-tiba</string>
     <string name="crash_recovery_message">Coba muat model yang lebih kecil atau gunakan CPU.</string>
+    <string name="feature_photo_search">Instant Media Search</string>
+    <string name="feature_photo_search_desc">Organize and search your photos and videos locally with EmbeddingGemma 2</string>
+    <string name="feature_video_moment">Video Moment Finder</string>
+    <string name="feature_video_moment_desc">Search for moments in videos using natural language with EmbeddingGemma 2</string>
+    <string name="video_moment_onboarding_title">Search for a moment inside your videos</string>
+    <string name="video_moment_onboarding_desc">EmbeddingGemma 2 splits each video into 2 second windows, reads two frames and the audio in each window, then you can jump to the moment you describe.</string>
+    <string name="video_moment_all">Analyze all videos</string>
+    <string name="video_moment_pick">Select videos</string>
+    <string name="video_moment_hint">Describe a moment, e.g. cutting a cake</string>
+    <string name="video_moment_play">Play %1$s</string>
+    <string name="feature_audio_search">Penelusuran Audio</string>
+    <string name="feature_audio_search_desc">Temukan momen dalam audio dengan mendeskripsikannya</string>
+    <string name="media_search_download_model">Unduh EmbeddingGemma 2</string>
+    <string name="media_search_download_model_desc">Fitur ini menjalankan EmbeddingGemma 2 di perangkat Anda. Unduh dari daftar model untuk memulai.</string>
+    <string name="media_search_loading_model">Memuat EmbeddingGemma 2…</string>
+    <string name="media_search_model_failed">Tidak dapat memuat EmbeddingGemma 2</string>
+    <string name="media_search_analyzing">Menganalisis…</string>
+    <string name="media_search_paused">Analisis dijeda</string>
+    <string name="media_search_progress">%1$d dari %2$d dianalisis (%3$d%%)</string>
+    <string name="media_search_pause">Jeda</string>
+    <string name="media_search_resume">Lanjutkan</string>
+    <string name="media_search_incomplete_warning">Masih menganalisis, jadi beberapa hasil mungkin belum ada.</string>
+    <string name="media_search_no_results">Tidak ada yang cocok</string>
+    <string name="media_search_library">Pustaka</string>
+    <string name="media_search_clear">Hapus semua dan mulai lagi</string>
+    <string name="media_search_grant_access">Izinkan akses</string>
+    <string name="photo_search_onboarding_title">Cari foto dan video dengan mendeskripsikannya</string>
+    <string name="photo_search_onboarding_desc">EmbeddingGemma 2 menganalisis foto dan video di perangkat ini. Video dibaca dari bingkai pertama dan terakhir. Lalu Anda bisa mencari dengan kata biasa atau menemukan item serupa. Tidak ada yang keluar dari ponsel.</string>
+    <string name="photo_search_all_photos">Analisis semua foto dan video</string>
+    <string name="photo_search_select_photos">Pilih foto dan video</string>
+    <string name="photo_search_hint">Deskripsikan foto atau video, mis. anjing di pantai</string>
+    <string name="photo_search_find_similar">Temukan foto serupa</string>
+    <string name="photo_search_similar_results">Foto serupa</string>
+    <string name="photo_search_permission_denied">Akses foto dan video diperlukan untuk menganalisis pustaka Anda.</string>
+    <string name="photo_search_count">%1$d dari %2$d foto dianalisis</string>
+    <string name="audio_search_onboarding_title">Cari audio dengan mendeskripsikannya</string>
+    <string name="audio_search_onboarding_desc">EmbeddingGemma 2 membagi setiap rekaman menjadi momen singkat dan menganalisisnya di perangkat ini, sehingga Anda bisa langsung ke bagian yang dideskripsikan.</string>
+    <string name="audio_search_scan_device">Analisis audio perangkat</string>
+    <string name="audio_search_import">Impor file audio</string>
+    <string name="audio_search_hint">Deskripsikan suara, mis. orang tertawa</string>
+    <string name="audio_search_permission_denied">Akses audio diperlukan untuk menganalisis audio perangkat.</string>
+    <string name="audio_search_count">%1$d dari %2$d file dianalisis</string>
+    <string name="audio_search_moment">Putar %1$s</string>
+
+    <!-- Supertonic 3 -->
+    <string name="supertonic_language">Bahasa ucapan</string>
+    <string name="supertonic_voice_download_failed">Unduhan suara gagal. Coba lagi.</string>
+    <string name="supertonic_model_unavailable">Supertonic 3 tidak tersedia. Selesaikan unduhan model atau pilih mesin ucapan lain di Setelan.</string>
+    <string name="supertonic_speech_failed">Ucapan gagal. Periksa suara yang dipilih dan pilih bahasa yang didukung di Setelan.</string>
+
+    <!-- On-device PocketTTS.cpp voice cloning -->
+    <string name="pocket_voice_cloning">Kloning suara · Pocket TTS</string>
+    <string name="pocket_voice_help">Rekam di sini atau impor audio. Hanya bahasa Inggris. Impor klip WAV, MP3, FLAC, M4A/AAC, atau OGG yang jernih sepanjang 3–30 detik (maksimal 20 MB). Kloning sepenuhnya di perangkat ini. Memilih suara menggunakan Pocket TTS di seluruh aplikasi kecuali Penerjemah.</string>
+    <string name="pocket_model_required">Unduh Pocket TTS dari layar unduhan model terlebih dahulu.</string>
+    <string name="pocket_cloning">Mengkloning suara di perangkat ini…</string>
+    <string name="pocket_clone_failed">Tidak dapat mengkloning suara. Gunakan klip ucapan WAV, MP3, FLAC, M4A/AAC, atau OGG yang jernih minimal 3 detik.</string>
+    <string name="pocket_import_voice">Impor dan kloning suara</string>
+    <string name="pocket_speech_failed">Tidak dapat menghasilkan ucapan. Pilih suara kloning Pocket TTS di Pengaturan.</string>
+
+    <!-- Microphone recording for local voice cloning -->
+    <string name="pocket_record_voice">Rekam suara</string>
+    <string name="pocket_stop_and_clone">Hentikan dan kloning</string>
+    <string name="pocket_recording">Merekam: %1$d / 30 dtk</string>
+    <string name="pocket_record_failed">Perekaman atau kloning gagal. Coba lagi dengan ucapan jernih minimal 3 detik.</string>
+    <string name="pocket_microphone_required">Izinkan akses mikrofon untuk merekam suara.</string>
+    <string name="pocket_recorded_voice">Rekaman %1$s</string>
+
+    <!-- Supertonic custom voice file import -->
+    <string name="supertonic_import_voice">Impor JSON suara</string>
+    <string name="supertonic_import_failed">Tidak dapat mengimpor suara. Pilih file JSON gaya suara Supertonic 3 (maksimal 2 MB).</string>
+
+    <!-- Vibecode local Codex agent -->
+    <string name="vibe_codex_mode">Mode Codex</string>
+    <string name="vibe_codex_description">Menggunakan model lokal pilihan Anda tanpa login. Perintah berjalan dengan izin Termux.</string>
+    <string name="vibe_codex_install">Instal Codex di Termux</string>
+    <string name="vibe_codex_install_help">Aktifkan perintah aplikasi eksternal di Termux, lalu instal Codex sebelum memulai.</string>
+    <string name="vibe_codex_installing">Menginstal Codex di Termux…</string>
+    <string name="vibe_codex_installed">Codex sudah terinstal. Model lokal pilihan Anda siap digunakan.</string>
+    <string name="vibe_codex_requirements">Memerlukan Android 10 atau lebih baru dan perangkat ARM64.</string>
+    <string name="vibe_codex_connection_error">Tidak dapat terhubung ke Codex di Termux.</string>
+    <string name="vibe_codex_model_error">Model lokal tidak memberikan respons alat yang valid. Coba model pemrograman atau konteks yang lebih besar.</string>
+    <string name="vibe_codex_conflict">Proyek berubah di luar Vibecode. Perubahan yang dihasilkan tetap ada di ruang kerja Termux.</string>
+    <string name="vibe_codex_failed">Codex gagal. Periksa pengaturan Termux, model lokal, dan log aplikasi.</string>
+    <string name="vibe_codex_folder_required">Buka folder ruang kerja sebelum menggunakan Codex.</string>
+    <string name="vibe_codex_approval">Codex meminta persetujuan</string>
+
+    <string name="vibe_codex_terminal">Terminal</string>
+    <string name="vibe_codex_running">Berjalan</string>
+    <string name="vibe_codex_stopped">Dihentikan</string>
+    <string name="vibe_codex_starting">Memulai Codex…</string>
+    <string name="vibe_codex_connecting">Menghubungkan ke Codex…</string>
+    <string name="vibe_codex_staging">Menyiapkan berkas proyek…</string>
+    <string name="vibe_codex_generating">Model lokal sedang bekerja…</string>
+    <string name="vibe_codex_syncing">Menerapkan perubahan proyek…</string>
+    <string name="vibe_codex_step_progress">Langkah agen %1$d · percobaan %2$d · %3$d karakter dihasilkan</string>
+    <string name="vibe_codex_saved_verified">%1$s disimpan dan isinya diverifikasi.</string>
+    <string name="tts_voice_name">Nama suara</string>
+    <string name="tts_voice_rename_failed">Tidak dapat mengganti nama suara ini. Silakan coba lagi.</string>
 </resources>

@@ -94,7 +94,13 @@ final class MemoryStore: ObservableObject {
 
         // Try new Store format first.
         if let decoded = try? JSONDecoder().decode(Store.self, from: rawData) {
-            documents = decoded.documents
+            // Memory is text-only: image/audio entries can't be embedded or injected into chats.
+            documents = decoded.documents.filter { $0.metadata != "image" && $0.metadata != "audio" }
+            if documents.count != decoded.documents.count {
+                let mediaDir = fileURL.deletingLastPathComponent().appendingPathComponent("memory_media")
+                try? FileManager.default.removeItem(at: mediaDir)
+                save()
+            }
             return
         }
 
@@ -116,4 +122,3 @@ final class MemoryStore: ObservableObject {
         try? data.write(to: fileURL, options: .atomic)
     }
 }
-

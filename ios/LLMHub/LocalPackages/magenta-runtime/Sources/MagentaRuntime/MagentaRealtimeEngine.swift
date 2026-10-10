@@ -2,7 +2,7 @@
 import Foundation
 import MLX
 
-/// Offline iOS driver for Magenta RealTime 2's exported stateful MLX function.
+/// Streaming and offline iOS driver for Magenta RealTime 2's exported stateful MLX function.
 ///
 /// This follows magenta-realtime/core/src/mlx_engine.cpp: one 1,920-sample
 /// stereo frame at 48 kHz per transformer invocation, carrying every returned
@@ -19,10 +19,12 @@ public enum MagentaRealtimeEngine {
     public final class Session: @unchecked Sendable {
         fileprivate let function: ImportedFunction
         fileprivate let initialState: [MLXArray]
+        fileprivate let randomKeyIndex: Int
 
-        fileprivate init(function: ImportedFunction, initialState: [MLXArray]) {
+        fileprivate init(function: ImportedFunction, initialState: [MLXArray], randomKeyIndex: Int) {
             self.function = function
             self.initialState = initialState
+            self.randomKeyIndex = randomKeyIndex
         }
     }
 
@@ -38,8 +40,16 @@ public enum MagentaRealtimeEngine {
         guard state.count == 165 || state.count == 229 else {
             throw EngineError.unsupportedStateCount(state.count)
         }
+        // Match the native engine: the RNG key is the unique uint32 state
+        // tensor with a trailing dimension of two, for either model size.
+        let keyIndices = state.indices.filter {
+            state[$0].dtype == .uint32 && state[$0].shape.last == 2
+        }
+        guard keyIndices.count == 1 else {
+            throw EngineError.invalidRandomKeyCount(keyIndices.count)
+        }
         eval(state)
-        return Session(function: function, initialState: state)
+        return Session(function: function, initialState: state, randomKeyIndex: keyIndices[0])
     }
 
     public static func generate(
@@ -48,6 +58,7 @@ public enum MagentaRealtimeEngine {
         prompt: String,
         resourceDirectory: URL,
         durationSeconds: Double,
+        seed: UInt64? = nil,
         progress: @Sendable (Double) -> Void
     ) throws -> Data {
         let session = try load(functionURL: functionURL, stateURL: stateURL)
@@ -56,22 +67,29 @@ public enum MagentaRealtimeEngine {
             prompt: prompt,
             resourceDirectory: resourceDirectory,
             durationSeconds: durationSeconds,
+            seed: seed,
             progress: progress
         )
     }
 
+    /// A nil duration streams until shouldStop returns true. Use collectAudio=false
+    /// with onAudioFrame to keep memory bounded during an unlimited recording.
     public static func generate(
         session: Session,
         prompt: String,
         resourceDirectory: URL,
-        durationSeconds: Double,
+        durationSeconds: Double?,
+        seed: UInt64? = nil,
+        collectAudio: Bool = true,
+        shouldStop: @Sendable () -> Bool = { false },
+        onAudioFrame: (@Sendable (Data) throws -> Void)? = nil,
         progress: @Sendable (Double) -> Void
     ) throws -> Data {
         let function = session.function
-        var state = session.initialState
+        let stateCount = session.initialState.count
 
-        let frameCount = max(1, Int(ceil(durationSeconds * 25.0)))
-        var pcm = Data(capacity: frameCount * frameSamples * 4)
+        let frameCount = durationSeconds.map { max(1, Int(ceil($0 * 25.0))) }
+        var pcm = Data(capacity: collectAudio ? (frameCount ?? 0) * frameSamples * 4 : 0)
         let musicCoCaTokens = try MagentaPromptEncoder.encode(
             prompt: prompt,
             resourceDirectory: resourceDirectory
@@ -80,25 +98,45 @@ public enum MagentaRealtimeEngine {
         let negativeMusic = makeNegativeMusic(from: condition)
         let negativeNotes = makeNegativeNotes(from: condition)
 
-        for frame in 0..<frameCount {
-            var arguments: [MLXArray] = [
-                MLXArray(condition, [1, 1, conditionLength]),
-                // Match `mrt mlx generate`, the repository's documented MLX path.
-                MLXArray([Float(1.3)], [1]),
-                MLXArray([Int32(40)], [1]),
-                MLXArray([promptAdherence], [1]),
-                MLXArray([Float(1.0)], [1]),
-                MLXArray([Float(1.0)], [1]),
-                MLXArray(negativeMusic, [1, 1, conditionLength]),
-                MLXArray(negativeNotes, [1, 1, conditionLength]),
-                MLX.zeros([1, 0, musicCoCaLevels], dtype: .int32),
-            ]
-            arguments.append(contentsOf: state)
-            let outputs = try invoke(function, arguments: arguments, stateCount: state.count)
-            guard outputs.count == state.count + 1 else {
-                throw EngineError.invalidOutputCount(outputs.count, state.count + 1)
+        // These inputs do not change during a generation. Materialize them once,
+        // as the upstream native engine does, instead of allocating GPU inputs
+        // again for every 40 ms of audio.
+        var arguments: [MLXArray] = [
+            MLXArray(condition, [1, 1, conditionLength]),
+            MLXArray([Float(1.3)], [1]),
+            MLXArray([Int32(40)], [1]),
+            MLXArray([promptAdherence], [1]),
+            MLXArray([Float(1.0)], [1]),
+            MLXArray([Float(1.0)], [1]),
+            MLXArray(negativeMusic, [1, 1, conditionLength]),
+            MLXArray(negativeNotes, [1, 1, conditionLength]),
+            MLX.zeros([1, 0, musicCoCaLevels], dtype: .int32),
+        ]
+        arguments.append(contentsOf: session.initialState)
+        let generationSeed = seed ?? UInt64.random(in: 0...UInt64.max)
+        let savedKey = session.initialState[session.randomKeyIndex]
+        let keyCount = savedKey.size / 2
+        let keys = (0..<keyCount).map { MLXRandom.key(generationSeed &+ UInt64($0)) }
+        arguments[9 + session.randomKeyIndex] = stacked(keys).reshaped(savedKey.shape)
+        print("[LLMHub][MusicGen] seed=\(generationSeed)")
+        eval(arguments)
+
+        var modelTime = 0.0
+        var conversionTime = 0.0
+        var deliveryTime = 0.0
+        var frame = 0
+        while frameCount.map({ frame < $0 }) ?? true {
+            try Task.checkCancellation()
+            if shouldStop() { break }
+            let modelStart = ProcessInfo.processInfo.systemUptime
+            let outputs = try invoke(function, arguments: arguments, stateCount: stateCount)
+            guard outputs.count == stateCount + 1 else {
+                throw EngineError.invalidOutputCount(outputs.count, stateCount + 1)
             }
             eval(outputs)
+            let conversionStart = ProcessInfo.processInfo.systemUptime
+            modelTime += conversionStart - modelStart
+            var framePCM = Data(count: frameSamples * 4)
             let audioTensor = outputs[0]
             if frame == 0 {
                 print("[LLMHub][MusicGen] audioOutput dtype=\(audioTensor.dtype) shape=\(audioTensor.shape)")
@@ -112,11 +150,12 @@ public enum MagentaRealtimeEngine {
                 guard audio.count >= frameSamples * 2 else {
                     throw EngineError.invalidAudioShape(audioTensor.shape)
                 }
-                for sample in 0..<frameSamples {
-                    var left = audio[sample].littleEndian
-                    var right = audio[frameSamples + sample].littleEndian
-                    withUnsafeBytes(of: &left) { pcm.append(contentsOf: $0) }
-                    withUnsafeBytes(of: &right) { pcm.append(contentsOf: $0) }
+                framePCM.withUnsafeMutableBytes { bytes in
+                    let interleaved = bytes.bindMemory(to: Int16.self)
+                    for sample in 0..<frameSamples {
+                        interleaved[sample * 2] = audio[sample].littleEndian
+                        interleaved[sample * 2 + 1] = audio[frameSamples + sample].littleEndian
+                    }
                 }
             case .float32:
                 // Some exports emit normalized Float32, matching the C++
@@ -125,17 +164,33 @@ public enum MagentaRealtimeEngine {
                 guard audio.count >= frameSamples * 2 else {
                     throw EngineError.invalidAudioShape(audioTensor.shape)
                 }
-                for sample in 0..<frameSamples {
-                    var left = Int16(clamping: Int((audio[sample].clamped(to: -1...1) * 32_767).rounded())).littleEndian
-                    var right = Int16(clamping: Int((audio[frameSamples + sample].clamped(to: -1...1) * 32_767).rounded())).littleEndian
-                    withUnsafeBytes(of: &left) { pcm.append(contentsOf: $0) }
-                    withUnsafeBytes(of: &right) { pcm.append(contentsOf: $0) }
+                framePCM.withUnsafeMutableBytes { bytes in
+                    let interleaved = bytes.bindMemory(to: Int16.self)
+                    for sample in 0..<frameSamples {
+                        interleaved[sample * 2] = Int16(clamping: Int((audio[sample].clamped(to: -1...1) * 32_767).rounded())).littleEndian
+                        interleaved[sample * 2 + 1] = Int16(clamping: Int((audio[frameSamples + sample].clamped(to: -1...1) * 32_767).rounded())).littleEndian
+                    }
                 }
             default:
                 throw EngineError.unsupportedAudioType(String(describing: audioTensor.dtype))
             }
-            state = Array(outputs.dropFirst())
-            progress(Double(frame + 1) / Double(frameCount))
+            let deliveryStart = ProcessInfo.processInfo.systemUptime
+            conversionTime += deliveryStart - conversionStart
+            if collectAudio { pcm.append(framePCM) }
+            try onAudioFrame?(framePCM)
+            deliveryTime += ProcessInfo.processInfo.systemUptime - deliveryStart
+            for index in 0..<stateCount { arguments[9 + index] = outputs[1 + index] }
+            frame += 1
+            if frame % 125 == 0 {
+                // Each model frame supplies 40 ms of audio. Delivery includes
+                // deliberate backpressure when playback already has a full buffer.
+                print(String(format: "[LLMHub][MusicGen] frameTiming frames=%d model=%.2fms pcm=%.2fms delivery=%.2fms audioBudget=40ms",
+                    frame, modelTime * 8, conversionTime * 8, deliveryTime * 8))
+                modelTime = 0
+                conversionTime = 0
+                deliveryTime = 0
+            }
+            if let frameCount { progress(Double(frame) / Double(frameCount)) }
         }
         return pcm
     }
@@ -599,12 +654,15 @@ public enum MagentaRealtimeEngine {
 
     enum EngineError: LocalizedError {
         case unsupportedStateCount(Int)
+        case invalidRandomKeyCount(Int)
         case invalidOutputCount(Int, Int)
         case invalidAudioShape([Int])
         case unsupportedAudioType(String)
 
         var errorDescription: String? {
             switch self {
+            case .invalidRandomKeyCount(let count):
+                return "Magenta state must contain one RNG key tensor; found \(count)"
             case .unsupportedStateCount(let count):
                 return "Unsupported Magenta state layout (\(count) arrays)"
             case .invalidOutputCount(let actual, let expected):

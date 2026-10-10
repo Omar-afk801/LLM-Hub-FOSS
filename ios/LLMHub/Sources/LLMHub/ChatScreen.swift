@@ -884,7 +884,7 @@ class ChatViewModel: ObservableObject {
         guard selectedModelName != AppSettings.shared.localized("no_model_selected") else { return }
         guard let model = chatModel(named: selectedModelName) else { return }
 
-        let modelMaxContext = max(1, model.contextWindowSize > 0 ? model.contextWindowSize : 2048)
+        let modelMaxContext = LLMBackend.shared.modelMaxContextWindow(for: model)
         let desiredContextWindow = min(max(1, Int(contextWindow)), modelMaxContext)
 
         if !force,
@@ -1001,7 +1001,7 @@ class ChatViewModel: ObservableObject {
             return fallback
         }
 
-        let modelMaxContext = Double(max(1, model.contextWindowSize > 0 ? model.contextWindowSize : 2048))
+        let modelMaxContext = Double(LLMBackend.shared.modelMaxContextWindow(for: model))
         var clamped = settings
         clamped.contextWindow = min(max(1, clamped.contextWindow), modelMaxContext)
         clamped.maxTokens = min(max(1, clamped.maxTokens), clamped.contextWindow)
@@ -1152,15 +1152,17 @@ class ChatViewModel: ObservableObject {
             var ragContextPrefix = ""
             if ragEnabled {
                 var contextParts: [String] = []
+                var injectedContents: Set<String> = []
                 if isMemoryEnabled {
                     let memChunks = await RagServiceManager.shared.searchGlobalContext(query: capturedPrompt, maxResults: 3, relaxed: false)
                     for chunk in memChunks {
+                        injectedContents.insert(chunk.content)
                         contextParts.append("📝 **\(chunk.fileName)**:\n\(chunk.content.trimmingCharacters(in: .whitespacesAndNewlines))")
                     }
                 }
                 if await RagServiceManager.shared.hasDocuments(chatId: chatId) {
                     let docChunks = await RagServiceManager.shared.searchRelevantContext(chatId: chatId, query: capturedPrompt, maxResults: 3)
-                    for chunk in docChunks {
+                    for chunk in docChunks where injectedContents.insert(chunk.content).inserted {
                         contextParts.append("📄 **\(chunk.fileName)**:\n\(chunk.content.trimmingCharacters(in: .whitespacesAndNewlines))")
                     }
                 }
@@ -1332,6 +1334,7 @@ class ChatViewModel: ObservableObject {
             if !capturedPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             if ragEnabled {
                 var contextParts: [String] = []
+                var injectedContents: Set<String> = []
                 print("🔍 [Chat] Send — RAG enabled, memoryEnabled=\(memoryEnabled)")
 
                 // 2a. Global memory search.
@@ -1342,16 +1345,17 @@ class ChatViewModel: ObservableObject {
                     )
                     print("🔍 [Chat] Send — got \(memChunks.count) memory chunks")
                     for chunk in memChunks {
+                        injectedContents.insert(chunk.content)
                         contextParts.append("📝 **\(chunk.fileName)**:\n\(chunk.content.trimmingCharacters(in: .whitespacesAndNewlines))")
                     }
                 }
 
-                // 2b. Per-chat document search.
+                // 2b. Per-chat document search (global memory is replicated into chats; skip repeats).
                 if await RagServiceManager.shared.hasDocuments(chatId: chatId) {
                     let docChunks = await RagServiceManager.shared.searchRelevantContext(
                         chatId: chatId, query: capturedPrompt, maxResults: 3
                     )
-                    for chunk in docChunks {
+                    for chunk in docChunks where injectedContents.insert(chunk.content).inserted {
                         contextParts.append("📄 **\(chunk.fileName)**:\n\(chunk.content.trimmingCharacters(in: .whitespacesAndNewlines))")
                     }
                 }

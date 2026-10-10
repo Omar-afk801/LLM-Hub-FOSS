@@ -30,6 +30,9 @@ class ThemePreferences(private val context: Context) {
         private val AUTO_READOUT_ENABLED_KEY = booleanPreferencesKey("auto_readout_enabled")
         private val IS_PREMIUM_KEY = booleanPreferencesKey("is_premium")
         private val GITHUB_STARS_KEY = androidx.datastore.preferences.core.intPreferencesKey("github_stars")
+        private val POCKET_VOICE_KEY = stringPreferencesKey("pocket_voice")
+        private val SUPERTONIC_VOICE_KEY = stringPreferencesKey("supertonic_voice")
+        private val SUPERTONIC_LANGUAGE_KEY = stringPreferencesKey("supertonic_language")
         private val SELECTED_TTS_MODEL_KEY = stringPreferencesKey("selected_tts_model")
         private val SELECTED_TTS_DEVICE_KEY = stringPreferencesKey("selected_tts_device")
         private val SELECTED_TTS_VOICE_KEY = stringPreferencesKey("selected_tts_voice")
@@ -171,6 +174,19 @@ class ThemePreferences(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[GITHUB_STARS_KEY] = stars
         }
+    }
+
+    val pocketVoice: Flow<String> = context.dataStore.data.map { it[POCKET_VOICE_KEY] ?: "" }
+    suspend fun setPocketVoice(voice: String) { context.dataStore.edit { it[POCKET_VOICE_KEY] = voice } }
+    val supertonicVoice: Flow<String> = context.dataStore.data.map { it[SUPERTONIC_VOICE_KEY]?.takeIf { key -> SupertonicModel.isVoiceKey(key) && (key in SupertonicModel.voices || SupertonicModel.voiceFile(context, key) != null) } ?: "M1" }
+    val supertonicLanguage: Flow<String> = context.dataStore.data.map { it[SUPERTONIC_LANGUAGE_KEY] ?: "" }
+    suspend fun setSupertonicVoice(voice: String) {
+        require(SupertonicModel.isVoiceKey(voice))
+        context.dataStore.edit { it[SUPERTONIC_VOICE_KEY] = voice }
+    }
+    suspend fun setSupertonicLanguage(language: String) {
+        require(language.isEmpty() || language in SupertonicModel.languages)
+        context.dataStore.edit { it[SUPERTONIC_LANGUAGE_KEY] = language }
     }
 
     val selectedTtsModel: Flow<String?> = context.dataStore.data

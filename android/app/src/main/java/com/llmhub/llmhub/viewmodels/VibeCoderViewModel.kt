@@ -3,6 +3,15 @@ package com.llmhub.llmhub.viewmodels
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import com.llmhub.llmhub.R
+import com.llmhub.llmhub.vibecode.CodexAgent
+import com.llmhub.llmhub.vibecode.CodexActivity
+import com.llmhub.llmhub.agent.TerminalOutputBuffer
+import com.llmhub.llmhub.agent.TermuxStreamingCommand
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.llmhub.llmhub.data.LLMModel
@@ -24,7 +33,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.llmhub.llmhub.data.DeviceInfo
 
 enum class CodeLanguage {
     HTML,
@@ -72,7 +80,8 @@ enum class ProgrammingLanguage {
 data class VibeChatMessage(
     val id: String = UUID.randomUUID().toString(),
     val role: String,
-    val text: String
+    val text: String,
+    val activityState: String? = null
 )
 
 data class CodeProposal(
@@ -106,6 +115,188 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
     private val inferenceService = (application as com.llmhub.llmhub.LlmHubApplication).inferenceService
     private val prefs = application.getSharedPreferences("vibe_coder_prefs", Context.MODE_PRIVATE)
     private val modelPrefs = ModelPreferences(application)
+
+    private val _codexEnabled = MutableStateFlow(prefs.getBoolean("codex_enabled", false))
+    val codexEnabled = _codexEnabled.asStateFlow()
+    private val _workspaceRevision = MutableStateFlow(0)
+    val workspaceRevision = _workspaceRevision.asStateFlow()
+    private val codexInferenceLock = Mutex()
+
+    fun setCodexEnabled(enabled: Boolean) {
+        if (_isProcessing.value) return
+        _codexEnabled.value = enabled
+        prefs.edit().putBoolean("codex_enabled", enabled).apply()
+        saveSettings()
+    }
+
+    private fun codexMessageUpdater(): (CodexActivity) -> Unit {
+        val ids = java.util.concurrent.ConcurrentHashMap<String, String>()
+        return { activity ->
+            val id = ids.getOrPut(activity.key) { UUID.randomUUID().toString() }
+            _chatMessages.update { messages ->
+                val message = VibeChatMessage(id, activity.role, activity.text, activity.state)
+                if (messages.any { it.id == id }) messages.map { if (it.id == id) message else it }
+                else messages + message
+            }
+        }
+    }
+
+    private fun finishCodexActivities(state: String) {
+        _chatMessages.update { messages -> messages.map {
+            if (it.activityState == "running") it.copy(activityState = state) else it
+        } }
+    }
+
+    fun installCodex() {
+        if (_isProcessing.value) return
+        _isProcessing.value = true
+        _errorMessage.value = null
+        val update = codexMessageUpdater()
+        processingJob = viewModelScope.launch {
+            val output = TerminalOutputBuffer()
+            var state = "failed"
+            try {
+                appendChat("assistant", getApplication<Application>().getString(R.string.vibe_codex_installing))
+                update(CodexActivity("install", "$ ${CodexAgent.INSTALL}\n", "terminal", "running"))
+                TermuxStreamingCommand.run(getApplication(), CodexAgent.INSTALL, 10 * 60_000L) { chunk ->
+                    update(CodexActivity("install", "$ ${CodexAgent.INSTALL}\n" + output.append(chunk), "terminal", "running"))
+                }
+                state = "succeeded"
+                appendChat("assistant", getApplication<Application>().getString(R.string.vibe_codex_installed))
+            } catch (e: CancellationException) { state = "stopped"; throw e }
+            catch (e: Exception) { reportCodexError(e) }
+            finally {
+                finishCodexActivities(state)
+                _isProcessing.value = false
+                persistActiveSession()
+            }
+        }
+    }
+
+    private fun reportCodexError(error: Exception) {
+        Log.e("VibeCoderVM", "Codex mode failed", error)
+        val app = getApplication<Application>()
+        _errorMessage.value = when (error.message) {
+            "termux_permission_required" -> app.getString(R.string.agent_mcp_termux_permission_required)
+            "termux_run_command_unavailable" -> app.getString(R.string.agent_mcp_termux_run_command_unavailable)
+            "workspace_conflict" -> app.getString(R.string.vibe_codex_conflict)
+            app.getString(R.string.vibe_codex_requirements) -> app.getString(R.string.vibe_codex_requirements)
+            app.getString(R.string.vibe_codex_connection_error) -> app.getString(R.string.vibe_codex_connection_error)
+            else -> if (error.message?.contains(app.getString(R.string.vibe_codex_model_error)) == true)
+                app.getString(R.string.vibe_codex_model_error) else app.getString(R.string.vibe_codex_failed)
+        }
+        appendChat("assistant", _errorMessage.value.orEmpty())
+        error.message?.takeIf { it != _errorMessage.value }?.let {
+            _chatMessages.update { messages -> messages + VibeChatMessage(role = "terminal", text = it.takeLast(8000), activityState = "failed") }
+        }
+    }
+
+    private fun generateWithCodex(prompt: String) {
+        if (_isProcessing.value) return
+        val model = _selectedModel.value ?: return
+        val app = getApplication<Application>()
+        val folder = _currentFolderUri.value ?: run {
+            val defaultCodexDir = java.io.File("/storage/emulated/0/Codex")
+            runCatching { defaultCodexDir.mkdirs() }
+            val path = defaultCodexDir.canonicalPath
+            _currentFolderUri.value = path
+            path
+        }
+        if (android.os.Build.VERSION.SDK_INT < 29) {
+            _errorMessage.value = app.getString(R.string.vibe_codex_requirements)
+            return
+        }
+        val chatId = _activeChatSessionId.value ?: return
+        val session = UUID.nameUUIDFromBytes("$chatId|$folder|${model.name}".toByteArray()).toString()
+        val editorUri = _currentFileUri.value
+        val editorName = _currentFileName.value
+        val editorCode = _generatedCode.value
+        val editorDirty = _isDirty.value
+        appendChat("user", prompt.trim())
+        _lastUserPrompt.value = prompt.trim()
+        _isProcessing.value = true
+        _errorMessage.value = null
+        processingJob = viewModelScope.launch {
+            val update = codexMessageUpdater()
+            var finalState = "failed"
+            try {
+                loadModelInternal()
+                check(_isModelLoaded.value) { "local_model_unavailable" }
+                val codexContextWindow = inferenceService.getLoadedContextSize() ?: _selectedMaxTokens.value
+                // Context capacity and one tool-response budget are different limits.
+                applyGenerationParametersToService(maxTokens = codexContextWindow, topK = 40, topP = 0.95f,
+                    temperature = 0.2f, responseMaxTokens = 4096)
+                val published = withContext(Dispatchers.IO) {
+                    CodexAgent(app).run(prompt.trim(), folder, session, prefs.getString("codex_thread_$session", null),
+                        editorUri, editorName, editorCode, codexContextWindow,
+                        infer = { request, onDelta ->
+                            codexInferenceLock.withLock {
+                                val output = StringBuilder()
+                                inferenceService.generateResponseStream(request, model).collect { chunk ->
+                                    output.append(chunk)
+                                    onDelta(chunk)
+                                }
+                                // Codex events own assistant messages; rendering here duplicates every answer.
+                                output.toString()
+                            }
+                        },
+                        onThread = { prefs.edit().putString("codex_thread_$session", it).apply() },
+                        onMessage = update, editorDirty = editorDirty)
+                }
+                val activeUri = (if (editorName != null) published[editorName] else null)
+                    ?: published.values.firstOrNull { it.toString() == editorUri }
+                    ?: (if (editorName == null && published.isNotEmpty()) published.values.first() else null)
+                    ?: (if (editorUri != null) android.net.Uri.parse(editorUri) else null)
+
+                if (activeUri != null) {
+                    val content = withContext(Dispatchers.IO) {
+                        runCatching {
+                            app.contentResolver.openInputStream(activeUri)?.bufferedReader()?.use { it.readText() }
+                        }.getOrNull() ?: runCatching {
+                            if (activeUri.scheme == "file" || activeUri.scheme.isNullOrEmpty()) {
+                                java.io.File(activeUri.path ?: activeUri.toString()).readText()
+                            } else null
+                        }.getOrNull()
+                    }
+                    if (content != null) {
+                        val resolvedName = editorName ?: published.entries.firstOrNull { it.value == activeUri }?.key
+                        _currentFileUri.value = activeUri.toString()
+                        if (resolvedName != null) {
+                            _currentFileName.value = resolvedName
+                            _codeLanguage.value = languageFromFileName(resolvedName)
+                        }
+                        _generatedCode.value = content
+                        _isDirty.value = false
+                    }
+                }
+                finalState = "succeeded"
+            } catch (e: CancellationException) { finalState = "stopped"; throw e }
+            catch (e: Exception) { reportCodexError(e) }
+            finally {
+                // A tool can edit successfully before a later model step fails or is stopped.
+                // Show the actual saved contents instead of leaving the stale pre-run editor visible.
+                if (finalState != "succeeded" && !editorDirty && editorUri != null && _currentFileUri.value == editorUri) {
+                    withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        val uri = android.net.Uri.parse(editorUri)
+                        val saved = runCatching {
+                            if (uri.scheme == "file" || uri.scheme.isNullOrEmpty()) {
+                                java.io.File(uri.path ?: editorUri).readText()
+                            } else app.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                        }.getOrNull()
+                        if (saved != null) {
+                            _generatedCode.value = saved
+                            _isDirty.value = false
+                        }
+                    }
+                }
+                _workspaceRevision.value++
+                finishCodexActivities(finalState)
+                _isProcessing.value = false
+                persistActiveSession()
+                saveSettings()
+            }
+        }
+    }
 
     private var lastAppliedModelName: String? = null
     private var lastAppliedConfig: ModelConfig? = null
@@ -234,11 +425,12 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
         _selectedMaxTokens.value = savedTokens.coerceIn(1, model.effectiveContextWindow(getApplication<Application>()))
 
         val isGemma4_12B = model.modelFormat == "litertlm" && (model.name.contains("Gemma-4 12B", ignoreCase = true) || model.name.contains("Gemma 4 12B", ignoreCase = true))
-        val savedBackendName = prefs.getString("selected_backend_${model.name}", prefs.getString("selected_backend", LlmInference.Backend.GPU.name))
+        val defaultBackendName = if (model.modelFormat == "gguf") LlmInference.Backend.CPU.name else LlmInference.Backend.GPU.name
+        val savedBackendName = prefs.getString("selected_backend_${model.name}", defaultBackendName)
         val restoredBackend = try {
-            LlmInference.Backend.valueOf(savedBackendName ?: LlmInference.Backend.GPU.name)
+            LlmInference.Backend.valueOf(savedBackendName ?: defaultBackendName)
         } catch (_: IllegalArgumentException) {
-            LlmInference.Backend.GPU
+            LlmInference.Backend.valueOf(defaultBackendName)
         }
         _selectedBackend.value = if (isGemma4_12B) {
             LlmInference.Backend.GPU
@@ -251,12 +443,9 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
         _selectedNpuDeviceId.value = if (isGemma4_12B) {
             null
         } else if (_selectedBackend.value == LlmInference.Backend.GPU) {
-            prefs.getString("selected_npu_device_id_${model.name}", prefs.getString("selected_npu_device_id", null))
+            prefs.getString("selected_npu_device_id_${model.name}", null)
         } else {
             null
-        }
-        if (model.modelFormat == "gguf" && DeviceInfo.isLlamaCppHexagonSupported() && _selectedNpuDeviceId.value == null) {
-            _selectedNpuDeviceId.value = "dev0"
         }
 
         _enableThinking.value = prefs.getBoolean("enable_thinking_${model.name}", prefs.getBoolean("enable_thinking", true))
@@ -312,6 +501,7 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
                 mo.put("id", m.id)
                 mo.put("role", m.role)
                 mo.put("text", m.text)
+                mo.put("activityState", m.activityState ?: JSONObject.NULL)
                 mArr.put(mo)
             }
             obj.put("messages", mArr)
@@ -353,7 +543,9 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
                             VibeChatMessage(
                                 id = mo.optString("id", UUID.randomUUID().toString()),
                                 role = mo.optString("role", "assistant"),
-                                text = mo.optString("text", "")
+                                text = mo.optString("text", ""),
+                                activityState = mo.optString("activityState").takeIf { it.isNotBlank() && it != "null" }
+                                    ?.let { if (it == "running") "stopped" else it }
                             )
                         )
                     }
@@ -397,6 +589,7 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun createNewChatSession() {
+        if (_codexEnabled.value && _isProcessing.value) return
         val index = chatSessionStore.size + 1
         val id = UUID.randomUUID().toString()
         chatSessionStore[id] = SessionPayload(id, "Chat $index", "vibe-coder-$id", mutableListOf(), mutableListOf(), null)
@@ -406,6 +599,7 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun selectChatSession(sessionId: String) {
+        if (_codexEnabled.value && _isProcessing.value) return
         val s = chatSessionStore[sessionId] ?: return
         _activeChatSessionId.value = sessionId
         _chatMessages.value = s.messages.toList()
@@ -420,6 +614,7 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun deleteChatSession(sessionId: String) {
+        if (_codexEnabled.value && _isProcessing.value) return
         if (!chatSessionStore.containsKey(sessionId)) return
         if (chatSessionStore.size <= 1) {
             // Keep at least one session available.
@@ -467,6 +662,7 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
      * Select a different model for code generation
      */
     fun selectModel(model: LLMModel) {
+        if (_codexEnabled.value && _isProcessing.value) return
         if (_isModelLoaded.value) {
             unloadModel()
         }
@@ -481,10 +677,16 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun setMaxTokens(maxTokens: Int) {
         val cap = _selectedModel.value?.effectiveContextWindow(getApplication<Application>()) ?: 4096
-        _selectedMaxTokens.value = maxTokens.coerceIn(1, cap)
-        recalculateContextUsage()
-        saveSettings()
-        applyGenerationParametersToService()
+        val clamped = maxTokens.coerceIn(1, cap)
+        if (_selectedMaxTokens.value != clamped) {
+            _selectedMaxTokens.value = clamped
+            if (_isModelLoaded.value && lastAppliedConfig?.contextWindow != clamped) {
+                unloadModel()
+            }
+            recalculateContextUsage()
+            saveSettings()
+            applyGenerationParametersToService()
+        }
     }
 
     /**
@@ -502,9 +704,14 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun setNGpuLayers(n: Int) {
-        _selectedNGpuLayers.value = n
-        saveSettings()
-        applyGenerationParametersToService()
+        if (_selectedNGpuLayers.value != n) {
+            _selectedNGpuLayers.value = n
+            if (_isModelLoaded.value && lastAppliedConfig?.nGpuLayers != n) {
+                unloadModel()
+            }
+            saveSettings()
+            applyGenerationParametersToService()
+        }
     }
     
     /**
@@ -522,6 +729,7 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun openEditorFile(fileUri: String, fileName: String, content: String) {
+        if (_codexEnabled.value && _isProcessing.value) return
         _currentFileUri.value = fileUri
         _currentFileName.value = fileName
         _generatedCode.value = content
@@ -534,6 +742,7 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun openFolder(folderUri: String) {
+        if (_codexEnabled.value && _isProcessing.value) return
         _currentFolderUri.value = folderUri
         saveSettings()
         appendChat("assistant", "Opened folder workspace")
@@ -605,6 +814,9 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun clearChatSession() {
+        if (_codexEnabled.value && _isProcessing.value) return
+        val session = UUID.nameUUIDFromBytes("${_activeChatSessionId.value}|${_currentFolderUri.value}|${_selectedModel.value?.name}".toByteArray()).toString()
+        prefs.edit().remove("codex_thread_$session").apply()
         _chatMessages.value = emptyList()
         _pendingProposal.value = null
         streamingAssistantMessageId = null
@@ -820,7 +1032,8 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
         maxTokens: Int? = null,
         topK: Int? = null,
         topP: Float? = null,
-        temperature: Float? = null
+        temperature: Float? = null,
+        responseMaxTokens: Int? = null
     ) {
         val model = _selectedModel.value
         val effectiveMaxTokens = when {
@@ -834,7 +1047,7 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
         val isGranite42 = model?.name?.contains("granite-4.2", ignoreCase = true) == true || model?.name?.contains("granite 4.2", ignoreCase = true) == true
         val useThinking = if (model?.name?.contains("Gemma-4", ignoreCase = true) == true || isMuseGlimmer || isGranite42) false else _enableThinking.value
         inferenceService.setGenerationParameters(
-            maxTokens = effectiveMaxTokens,
+            maxTokens = responseMaxTokens?.coerceIn(1, effectiveMaxTokens) ?: effectiveMaxTokens,
             topK = topK,
             topP = topP,
             temperature = temperature,
@@ -846,7 +1059,15 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
     
     suspend fun loadModelInternal() {
         val model = _selectedModel.value ?: return
-        if (_isModelLoaded.value && lastAppliedModelName == model.name && lastAppliedConfig != null) {
+        val isSameConfig = lastAppliedConfig != null &&
+            lastAppliedConfig?.contextWindow == _selectedMaxTokens.value &&
+            lastAppliedConfig?.maxTokens == _selectedMaxTokens.value &&
+            lastAppliedConfig?.backend == _selectedBackend.value?.name &&
+            lastAppliedConfig?.deviceId == _selectedNpuDeviceId.value &&
+            lastAppliedConfig?.nGpuLayers == (_selectedNGpuLayers.value ?: 999) &&
+            lastAppliedConfig?.enableThinking == _enableThinking.value
+
+        if (_isModelLoaded.value && lastAppliedModelName == model.name && isSameConfig) {
             Log.d("VibeCoderVM", "Skipping reload — model already loaded with same config")
             return
         }
@@ -860,6 +1081,10 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
                 inferenceService = inferenceService,
                 backendOverride = _selectedBackend.value,
                 deviceIdOverride = _selectedNpuDeviceId.value,
+                contextWindowOverride = _selectedMaxTokens.value,
+                maxTokensOverride = _selectedMaxTokens.value,
+                nGpuLayersOverride = _selectedNGpuLayers.value,
+                enableThinkingOverride = _enableThinking.value,
                 onConfigApplied = { cfg ->
                     lastAppliedModelName = model.name
                     lastAppliedConfig = cfg
@@ -887,6 +1112,7 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
      * Unload the current model from memory
      */
     fun unloadModel() {
+        if (_codexEnabled.value && _isProcessing.value) return
         viewModelScope.launch {
             try {
                 cancelGenerationInternal()
@@ -912,6 +1138,7 @@ class VibeCoderViewModel(application: Application) : AndroidViewModel(applicatio
      */
     fun generateCode(prompt: String) {
         if (prompt.isBlank()) return
+        if (_codexEnabled.value) { generateWithCodex(prompt); return }
         val model = _selectedModel.value ?: return
         
         if (_currentFileName.value.isNullOrBlank()) {

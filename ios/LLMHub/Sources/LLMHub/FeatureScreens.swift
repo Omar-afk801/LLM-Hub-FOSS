@@ -18,7 +18,8 @@ import Network
 @MainActor
 private func contextLimitForFeatureModel(_ model: AIModel, fallback: Int = 4096) -> Int {
     if model.modelFormat == .gguf {
-        return LLMBackend.shared.modelMaxContextWindow(for: model)
+        let maxCap = LLMBackend.shared.modelMaxContextWindow(for: model)
+        if maxCap > 0 { return maxCap }
     }
     return model.contextWindowSize > 0 ? model.contextWindowSize : fallback
 }
@@ -481,7 +482,7 @@ struct FeatureModelSettingsSheet: View {
         guard let selectedModel else { return 4096 }
         let cap = selectedModel.modelFormat == .gguf
             ? llm.modelMaxContextWindow(for: selectedModel)
-            : selectedModel.contextWindowSize
+            : (selectedModel.contextWindowSize > 0 ? selectedModel.contextWindowSize : 4096)
         return Double(max(2, cap))
     }
 
@@ -721,24 +722,22 @@ struct FeatureModelSettingsSheet: View {
 
     private func loadInitialGpuLayers() {
         guard let selectedModel = selectedModel else { return }
-        gpuLayerLimit = Double(GGUFLayerLimits.unknown)
+        let limit = LLMBackend.shared.modelMaxGpuLayers(for: selectedModel)
         let key = "gpu_layers_\(selectedModel.id)"
-        if UserDefaults.standard.object(forKey: key) != nil {
-            let stored = UserDefaults.standard.integer(forKey: key)
-            gpuLayersTemp = Double(stored == 99 ? 999 : stored)
-        } else {
-            gpuLayersTemp = 999
-        }
-        if let url = LLMBackend.shared.ggufFileURL(for: selectedModel) {
-            let modelID = selectedModel.id
-            Task {
-                let limit = await Task.detached(priority: .utility) {
-                    GGUFLayerLimits.read(from: url)
-                }.value ?? GGUFLayerLimits.unknown
-                guard self.selectedModel?.id == modelID else { return }
-                gpuLayersTemp = min(max(0, gpuLayersTemp), Double(limit))
-                gpuLayerLimit = Double(limit)
+        let hasStored = UserDefaults.standard.object(forKey: key) != nil
+        let stored = hasStored ? UserDefaults.standard.integer(forKey: key) : -1
+
+        if limit != GGUFLayerLimits.unknown {
+            gpuLayerLimit = Double(limit)
+            if !hasStored || stored == 999 || stored == 99 || stored > limit {
+                gpuLayersTemp = Double(limit)
+                saveGpuLayers(Double(limit))
+            } else {
+                gpuLayersTemp = min(max(0, Double(stored)), Double(limit))
             }
+        } else {
+            gpuLayerLimit = Double(GGUFLayerLimits.unknown)
+            gpuLayersTemp = hasStored ? Double(stored) : Double(GGUFLayerLimits.unknown)
         }
     }
 
@@ -1355,7 +1354,7 @@ private struct IOS26TranscriberScreen: View {
                 visionAvailableCheck: nil,
                 writingMode: nil,
                 modelFilter: {
-                    ($0.modelFormat == .litertlm && $0.supportsAudio) || $0.isWhisperModel
+                    ($0.modelFormat == .litertlm && $0.supportsAudio && $0.isLanguageModel) || $0.isWhisperModel
                 },
                 onLoad: {
                     isModelLoading = true
@@ -3076,7 +3075,7 @@ struct WritingAidScreen: View {
         }
         if let model = selectedFeatureModel(named: modelName) {
             let cap = contextLimitForFeatureModel(model)
-            return Double(min(4096, cap))
+            return Double(cap)
         }
         return 4096
     }
@@ -3462,10 +3461,10 @@ struct TranslatorScreen: View {
             return val
         }
         if let model = selectedFeatureModel(named: modelName) {
-            let cap = contextLimitForFeatureModel(model, fallback: 2048)
-            return Double(min(2048, cap))
+            let cap = contextLimitForFeatureModel(model, fallback: 4096)
+            return Double(cap)
         }
-        return 2048
+        return 4096
     }
 
     private func saveTranslatorContextWindow(value: Double, for modelName: String) {
@@ -4263,7 +4262,7 @@ struct ScamDetectorScreen: View {
         }
         if let model = selectedFeatureModel(named: modelName) {
             let cap = contextLimitForFeatureModel(model)
-            return Double(min(4096, cap))
+            return Double(cap)
         }
         return 4096
     }
@@ -5021,7 +5020,7 @@ struct VibeCoderScreen: View {
         }
         if let model = selectedFeatureModel(named: modelName) {
             let cap = contextLimitForFeatureModel(model)
-            return Double(min(4096, cap))
+            return Double(cap)
         }
         return 4096
     }
@@ -6509,7 +6508,7 @@ struct ImageGeneratorScreen: View {
     let onNavigateToModels: () -> Void
 
     private var availableModels: [AIModel] {
-        ModelData.models.filter { $0.isDrawThingsImageGeneration && StableDiffusionBackend.isModelDownloaded(modelId: $0.id) }
+        ModelData.allModels().filter { $0.isDrawThingsImageGeneration && StableDiffusionBackend.isModelDownloaded(modelId: $0.id) }
     }
 
     private var selectedModel: AIModel? {
@@ -7148,7 +7147,7 @@ private struct ImageGeneratorSettingsSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("\(settings.localized("image_generator_iterations")): \(Int(steps))")
                             .font(.headline)
-                        Slider(value: $steps, in: 10...50, step: 1)
+                        Slider(value: $steps, in: 1...50, step: 1)
                             .tint(ApolloPalette.accentStrong)
                     }
                     .padding()
@@ -7232,8 +7231,13 @@ public struct MusicGeneratorScreen: View {
     @State private var enableVision: Bool = false
     @State private var prompt: String = ""
     @State private var isGenerating: Bool = false
+    @State private var generationStartedAt: Date?
     @State private var generatedTracks: [GeneratedMusicTrack] = []
     @State private var durationSeconds: Double = 10.0
+    @AppStorage("feature_music_live_generation") private var liveGeneration: Bool = false
+    @AppStorage("feature_music_unlimited_duration") private var unlimitedDuration: Bool = false
+    @AppStorage("feature_music_random_seed") private var randomSeed: Bool = true
+    @AppStorage("feature_music_seed") private var musicSeed: Double = 0
     @State private var showSettings: Bool = false
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
@@ -7315,27 +7319,30 @@ public struct MusicGeneratorScreen: View {
                             promptInputCard
 
                             // Duration Controls
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Text(settings.localized("music_duration_label"))
-                                        .font(.subheadline)
-                                    Spacer()
-                                    Text("\(Int(durationSeconds))s")
-                                        .font(.subheadline)
-                                        .bold()
-                                        .foregroundStyle(ApolloPalette.accentStrong)
+                            if !liveGeneration || !unlimitedDuration {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack {
+                                        Text(settings.localized("music_duration_label"))
+                                            .font(.subheadline)
+                                        Spacer()
+                                        Text("\(Int(durationSeconds))s")
+                                            .font(.subheadline)
+                                            .bold()
+                                            .foregroundStyle(ApolloPalette.accentStrong)
+                                    }
+                                    Slider(value: $durationSeconds, in: 1...600, step: 1)
+                                        .tint(ApolloPalette.accentStrong)
                                 }
-                                Slider(value: $durationSeconds, in: 1...600, step: 1)
-                                    .tint(ApolloPalette.accentStrong)
+                                .padding(.horizontal)
+                                .padding(.vertical, 12)
+                                .background(.ultraThinMaterial)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Color.white.opacity(0.14), lineWidth: 1)
+                                )
+
                             }
-                            .padding(.horizontal)
-                            .padding(.vertical, 12)
-                            .background(.ultraThinMaterial)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.white.opacity(0.14), lineWidth: 1)
-                            )
 
                             if let errorMessage {
                                 Text(errorMessage)
@@ -7389,7 +7396,7 @@ public struct MusicGeneratorScreen: View {
                         }
                     }
 
-                    if isGenerating {
+                    if isGenerating && !(liveGeneration && unlimitedDuration) {
                         ProgressView(value: musicBackend.progress)
                             .tint(ApolloPalette.accentStrong)
                             .padding(.horizontal)
@@ -7397,26 +7404,39 @@ public struct MusicGeneratorScreen: View {
                     }
 
                     Button {
-                        generateMusic()
+                        if isGenerating {
+                            musicBackend.stopLiveGeneration()
+                        } else {
+                            generateMusic()
+                        }
                     } label: {
                         HStack(spacing: 8) {
-                            if isGenerating || isLoading {
+                            if isLoading {
                                 ProgressView()
                                     .tint(.white)
                                     .scaleEffect(0.85)
                             } else {
-                                Image(systemName: "sparkles")
+                                Image(systemName: isGenerating ? "stop.fill" : "sparkles")
                                     .font(.system(size: 13, weight: .bold))
                             }
-                            Text(isLoading ? settings.localized("model_loading") : isGenerating ? settings.localized("generating_music") : settings.localized("generate_music"))
-                                .lineLimit(1)
+                            if isGenerating {
+                                TimelineView(.periodic(from: .now, by: 1)) { context in
+                                    let elapsed = max(0, Int(context.date.timeIntervalSince(generationStartedAt ?? context.date)))
+                                    Text("\(settings.localized("music_stop_generation")) · \(String(format: "%02d:%02d", elapsed / 60, elapsed % 60))")
+                                        .monospacedDigit()
+                                        .lineLimit(1)
+                                }
+                            } else {
+                                Text(settings.localized(isLoading ? "model_loading" : "generate_music"))
+                                    .lineLimit(1)
+                            }
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
                     }
                     .foregroundStyle(.white)
                     .liquidGlassPrimaryButton(cornerRadius: 12)
-                    .disabled(prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isGenerating || isLoading)
+                    .disabled(isLoading || (!isGenerating && prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty))
                     .padding(.horizontal)
                     .padding(.bottom, 8)
                 }
@@ -7442,6 +7462,7 @@ public struct MusicGeneratorScreen: View {
                 } label: {
                     Image(systemName: "slider.horizontal.3")
                 }
+                .disabled(isGenerating || isLoading)
                 .tint(.white)
             }
         }
@@ -7466,7 +7487,8 @@ public struct MusicGeneratorScreen: View {
                     _ = await ensureModelLoaded(force: true)
                 },
                 onUnload: { musicBackend.unloadModel() },
-                showsThinkingToggle: false
+                showsThinkingToggle: false,
+                extraModelConfigsContent: AnyView(musicGenerationSettings)
             )
             .environmentObject(settings)
         }
@@ -7481,6 +7503,39 @@ public struct MusicGeneratorScreen: View {
         }
         .onDisappear {
             musicBackend.unloadModel()
+        }
+    }
+
+    private var musicGenerationSettings: some View {
+        VStack(spacing: 8) {
+            Toggle(settings.localized("music_live_generation"), isOn: $liveGeneration)
+                .tint(ApolloPalette.accentStrong)
+                .foregroundColor(.white)
+                .disabled(isGenerating || isLoading)
+
+            if liveGeneration {
+                Toggle(settings.localized("music_unlimited_duration"), isOn: $unlimitedDuration)
+                    .tint(ApolloPalette.accentStrong)
+                    .foregroundColor(.white)
+                    .disabled(isGenerating || isLoading)
+            }
+            Toggle(settings.localized("image_generator_random_seed"), isOn: $randomSeed)
+                .tint(ApolloPalette.accentStrong)
+                .foregroundColor(.white)
+                .disabled(isGenerating || isLoading)
+
+            if !randomSeed {
+                HStack {
+                    Text(settings.localized("image_generator_seed"))
+                    Spacer()
+                    Text("\(Int(musicSeed))")
+                        .monospacedDigit()
+                }
+                .foregroundColor(.white)
+                Slider(value: $musicSeed, in: 0...999_999, step: 1)
+                    .tint(ApolloPalette.accentStrong)
+                    .disabled(isGenerating || isLoading)
+            }
         }
     }
 
@@ -7549,28 +7604,43 @@ public struct MusicGeneratorScreen: View {
         dismissKeyboard()
         let requestedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !requestedPrompt.isEmpty else { return }
+        guard !isGenerating, !isLoading else { return }
         let requestedDuration = Int(durationSeconds)
+        let requestedModel = selectedModelName
+        let requestedLive = liveGeneration
+        let requestedUnlimited = liveGeneration && unlimitedDuration
+        let requestedSeed: UInt64? = randomSeed ? nil : UInt64(min(999_999, max(0, musicSeed)))
+        isLoading = true
         Task {
             if !isCurrentModelLoaded {
                 let success = await ensureModelLoaded(force: false)
-                guard success else { return }
+                guard success else {
+                    isLoading = false
+                    errorMessage = musicBackend.errorMessage
+                    return
+                }
             }
             await MainActor.run {
+                isLoading = false
+                generationStartedAt = Date()
                 isGenerating = true
                 errorMessage = nil
             }
 
             let backend = MusicGeneratorBackend.shared
             if let outputURL = await backend.generateMusic(
-                modelName: selectedModelName,
+                modelName: requestedModel,
                 prompt: requestedPrompt,
-                durationSeconds: Double(requestedDuration)
+                durationSeconds: Double(requestedDuration),
+                live: requestedLive,
+                unlimited: requestedUnlimited,
+                seed: requestedSeed
             ) {
                 await MainActor.run {
                     generatedTracks.append(
                         GeneratedMusicTrack(
                             prompt: requestedPrompt,
-                            requestedDurationSeconds: requestedDuration,
+                            requestedDurationSeconds: Int(ceil(backend.generatedDurationSeconds)),
                             url: outputURL
                         )
                     )
@@ -7579,7 +7649,7 @@ public struct MusicGeneratorScreen: View {
             } else {
                 await MainActor.run {
                     isGenerating = false
-                    errorMessage = backend.errorMessage ?? "Failed to generate music audio"
+                    errorMessage = backend.errorMessage
                 }
             }
         }

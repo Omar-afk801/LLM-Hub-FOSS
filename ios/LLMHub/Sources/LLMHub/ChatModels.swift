@@ -1,6 +1,7 @@
 import Foundation
 
 // MARK: - Data Models
+
 public struct ChatMessage: Identifiable, Equatable, Sendable, Codable {
     public let id: UUID
     public var content: String

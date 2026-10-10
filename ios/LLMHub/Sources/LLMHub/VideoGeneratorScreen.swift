@@ -32,7 +32,7 @@ struct VideoGeneratorScreen: View {
 
     // Only real video generation drawthings models — never image gen models
     private var availableModels: [AIModel] {
-        ModelData.models.filter { $0.isDrawThingsVideoGeneration && ModelData.isModelFullyAvailableLocally($0) }
+        ModelData.allModels().filter { $0.isDrawThingsVideoGeneration && ModelData.isModelFullyAvailableLocally($0) }
     }
 
     private var selectedModel: AIModel? {
@@ -390,7 +390,7 @@ struct VideoGeneratorScreen: View {
         }
         .foregroundStyle(.white)
         .liquidGlassPrimaryButton(cornerRadius: 12)
-        .disabled(!isGenerating && (promptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || inputImage == nil))
+        .disabled(!isGenerating && (promptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || (inputImage == nil && selectedModel?.supportsPromptOnlyVideoGeneration != true)))
     }
 
     private var saveButton: some View {
@@ -424,7 +424,7 @@ struct VideoGeneratorScreen: View {
 
     private func startGeneration() {
         guard !promptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        guard inputImage != nil else {
+        guard inputImage != nil || selectedModel?.supportsPromptOnlyVideoGeneration == true else {
             errorMessage = VideoError.inputImageRequired.localizedDescription
             return
         }
@@ -440,12 +440,12 @@ struct VideoGeneratorScreen: View {
         generateTask?.cancel()
         generateTask = Task {
             do {
-                if !videoBackend.isLoaded {
-                    guard let model = selectedModel else {
-                        errorMessage = settings.localized("video_generator_no_model")
-                        isGenerating = false
-                        return
-                    }
+                guard let model = selectedModel else {
+                    errorMessage = settings.localized("video_generator_no_model")
+                    isGenerating = false
+                    return
+                }
+                if !videoBackend.isLoaded || videoBackend.loadedModelId != model.id {
                     try await videoBackend.loadModel(url: URL(fileURLWithPath: "/"), modelId: model.id)
                 }
                 let url = try await videoBackend.generateVideo(

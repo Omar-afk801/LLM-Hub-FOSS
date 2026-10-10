@@ -45,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import com.llmhub.llmhub.R
 import com.llmhub.llmhub.data.ModelRequirements
 import com.llmhub.llmhub.data.DeviceInfo
+import com.llmhub.llmhub.data.ModelData
 import com.llmhub.llmhub.LlmHubApplication
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -92,6 +93,7 @@ private fun shouldShowNpuBadge(model: LLMModel): Boolean {
         "gguf" -> is8Gen4Device()
         // QNN models (listed + imported) on 8 Gen 1/2/3/4-class devices
         "qnn_npu" -> is8GenFamilyDeviceForQnn()
+        "litertlm" -> ModelData.isEmbeddingGemma2NpuModel(model)
         else -> false
     }
 }
@@ -991,6 +993,16 @@ private fun resolveLocalModelFiles(model: LLMModel, context: Context): List<File
     val modelsDir = File(context.filesDir, "models")
     val sdModelsDir = File(context.filesDir, "sd_models")
 
+    if (model.category == "image_upscale") {
+        val upscalerModelsDir = File(context.filesDir, "upscaler_models")
+        val safeName = model.name.replace(Regex("[^a-zA-Z0-9_\\-]"), "_")
+        val dir = File(upscalerModelsDir, safeName)
+        if (dir.exists() && dir.isDirectory) {
+            files += dir.listFiles()?.filter { it.isFile } ?: emptyList()
+        }
+        return files
+    }
+
     when (model.modelFormat.lowercase()) {
         "qnn_npu", "mnn_cpu" -> {
             val modelDir = File(sdModelsDir, model.name.replace(" ", "_"))
@@ -1098,6 +1110,9 @@ private fun formatSpeed(bytesPerSec: Long): String {
 }
 
 private fun getModelDisplayName(model: LLMModel, context: Context): String {
+    if (model.name == com.llmhub.llmhub.data.PocketTtsModel.NAME) {
+        return java.util.Locale.forLanguageTag("en").getDisplayLanguage(java.util.Locale.getDefault()) + " · ONNX"
+    }
     // Extract the part in parentheses from the model name
     val nameInParentheses = model.name.substringAfter("(").substringBefore(")")
     

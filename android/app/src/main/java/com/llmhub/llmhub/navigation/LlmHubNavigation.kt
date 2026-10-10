@@ -52,6 +52,9 @@ sealed class Screen(val route: String) {
     object Agent : Screen("agent")
     object TextToSpeech : Screen("text_to_speech")
     object MusicGenerator : Screen("music_generator")
+    object PhotoSearch : Screen("photo_search")
+    object AudioSearch : Screen("audio_search")
+    object VideoMoment : Screen("video_moment")
 }
 
 @Composable
@@ -111,6 +114,9 @@ fun LlmHubNavigation(
                         "agent" -> navigateIfPremium(Screen.Agent.route)
                         "text_to_speech" -> navController.navigate(Screen.TextToSpeech.route)
                         "music_generator" -> navController.navigate(Screen.MusicGenerator.route)
+                        "photo_search" -> navController.navigate(Screen.PhotoSearch.route)
+                        "audio_search" -> navController.navigate(Screen.AudioSearch.route)
+                        "video_moment" -> navController.navigate(Screen.VideoMoment.route)
                     }
                 },
                 onNavigateToSettings = {
@@ -349,6 +355,27 @@ fun LlmHubNavigation(
 
         composable(Screen.MusicGenerator.route) {
             MusicGeneratorScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToModelDownload = { navController.navigate(Screen.Models.route) }
+            )
+        }
+
+        composable(Screen.PhotoSearch.route) {
+            com.llmhub.llmhub.mediasearch.PhotoSearchScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToModelDownload = { navController.navigate(Screen.Models.route) }
+            )
+        }
+
+        composable(Screen.VideoMoment.route) {
+            com.llmhub.llmhub.mediasearch.VideoMomentScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToModelDownload = { navController.navigate(Screen.Models.route) }
+            )
+        }
+
+        composable(Screen.AudioSearch.route) {
+            com.llmhub.llmhub.mediasearch.AudioSearchScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToModelDownload = { navController.navigate(Screen.Models.route) }
             )

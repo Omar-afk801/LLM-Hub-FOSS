@@ -44,7 +44,7 @@ final class VideoGeneratorBackend: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
-        guard let model = ModelData.models.first(where: { $0.id == modelId }),
+        guard let model = ModelData.allModels().first(where: { $0.id == modelId }),
               ModelData.isModelFullyAvailableLocally(model) else {
             throw VideoError.modelNotDownloaded
         }
@@ -76,7 +76,9 @@ final class VideoGeneratorBackend: ObservableObject {
         guard isLoaded, let pipeline = pipeline else {
             throw VideoError.modelNotDownloaded
         }
-        guard let startingImage = inputImage else {
+        let supportsPromptOnly = ModelData.allModels().first(where: { $0.id == loadedModelId })?
+            .supportsPromptOnlyVideoGeneration == true
+        guard inputImage != nil || supportsPromptOnly else {
             throw VideoError.inputImageRequired
         }
 
@@ -94,13 +96,13 @@ final class VideoGeneratorBackend: ObservableObject {
         configuredPipeline.configuration = config
         self.pipeline = configuredPipeline
 
-        let inputs: [MediaGenerationPipeline.Input] = [startingImage]
+        let inputs: [MediaGenerationPipeline.Input] = inputImage.map { [$0] } ?? []
 
         let results = try await configuredPipeline.generate(
             prompt: prompt,
             negativePrompt: "",
             inputs: inputs
-        ) { @Sendable state in
+        ) { @Sendable state, _ in
             if case .generating(let step, let total) = state {
                 Task { @MainActor in
                     VideoGeneratorBackend.shared.generationStep = step

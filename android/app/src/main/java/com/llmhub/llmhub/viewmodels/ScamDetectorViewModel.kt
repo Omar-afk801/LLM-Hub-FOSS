@@ -2,9 +2,9 @@ package com.llmhub.llmhub.viewmodels
 
 import android.app.Application
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import com.llmhub.llmhub.utils.loadInferenceBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.llmhub.llmhub.data.LLMModel
@@ -28,7 +28,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-import com.llmhub.llmhub.data.DeviceInfo
 
 class ScamDetectorViewModel(application: Application) : AndroidViewModel(application) {
     
@@ -161,9 +160,9 @@ class ScamDetectorViewModel(application: Application) : AndroidViewModel(applica
             }
 
             val model = _selectedModel.value
-            if (model?.modelFormat == "gguf" && DeviceInfo.isLlamaCppHexagonSupported() && _selectedNpuDeviceId.value == null) {
-                _selectedBackend.value = LlmInference.Backend.GPU
-                _selectedNpuDeviceId.value = "dev0"
+            if (model?.modelFormat == "gguf" && !prefs.contains("selected_backend")) {
+                _selectedBackend.value = LlmInference.Backend.CPU
+                _selectedNpuDeviceId.value = null
             }
         }
     }
@@ -186,9 +185,9 @@ class ScamDetectorViewModel(application: Application) : AndroidViewModel(applica
         if (isGemma4_12B) {
             _selectedBackend.value = LlmInference.Backend.GPU
             _selectedNpuDeviceId.value = null
-        } else if (model.modelFormat == "gguf" && DeviceInfo.isLlamaCppHexagonSupported() && _selectedNpuDeviceId.value == null) {
-            _selectedBackend.value = LlmInference.Backend.GPU
-            _selectedNpuDeviceId.value = "dev0"
+        } else if (model.modelFormat == "gguf") {
+            _selectedBackend.value = LlmInference.Backend.CPU
+            _selectedNpuDeviceId.value = null
         } else {
             _selectedBackend.value = if (model.supportsGpu) {
                 _selectedBackend.value ?: LlmInference.Backend.GPU
@@ -617,22 +616,13 @@ Be thorough and specific in your analysis. If you detect a scam, clearly state i
         return withContext(Dispatchers.IO) {
             try {
                 Log.d(TAG, "Opening input stream for URI: $uri")
-                val inputStream = context.contentResolver.openInputStream(uri)
-                if (inputStream != null) {
-                    inputStream.use { stream ->
-                        val bitmap = BitmapFactory.decodeStream(stream)
-                        if (bitmap != null) {
-                            Log.d(TAG, "Bitmap decoded successfully: ${bitmap.width}x${bitmap.height}")
-                            bitmap
-                        } else {
-                            Log.w(TAG, "BitmapFactory.decodeStream returned null")
-                            null
-                        }
-                    }
+                val bitmap = loadInferenceBitmap(context, uri)
+                if (bitmap != null) {
+                    Log.d(TAG, "Bitmap decoded successfully: ${bitmap.width}x${bitmap.height}")
                 } else {
-                    Log.w(TAG, "Failed to open input stream for URI: $uri")
-                    null
+                    Log.w(TAG, "Failed to decode image URI: $uri")
                 }
+                bitmap
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load image from URI: $uri", e)
                 null

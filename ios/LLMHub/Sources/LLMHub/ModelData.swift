@@ -1,5 +1,6 @@
 import Foundation
 import ModelZoo
+@preconcurrency import MediaGenerationKit
 
 public enum ModelFormat: String, Codable, Sendable {
     case task
@@ -163,6 +164,7 @@ public struct AIModel: Identifiable, Codable, Sendable {
     }
 
     public var sizeLabel: String {
+        guard sizeBytes > 0 else { return "Size unknown" }
         let formatter = ByteCountFormatter()
         formatter.allowedUnits = [.useGB, .useMB]
         formatter.countStyle = .file
@@ -180,7 +182,7 @@ public struct AIModel: Identifiable, Codable, Sendable {
     }
 
     public var ramLabel: String {
-        "\(requirements.minRamGB)GB RAM"
+        requirements.minRamGB > 0 ? "\(requirements.minRamGB)GB RAM" : "RAM requirement unknown"
     }
 
     public var allDownloadURLs: [URL] {
@@ -222,6 +224,11 @@ public struct AIModel: Identifiable, Codable, Sendable {
         modelFormat == .drawthings && category == .videoGeneration
     }
 
+    /// LTX-2.3 accepts a prompt alone or an optional conditioning image.
+    public var supportsPromptOnlyVideoGeneration: Bool {
+        isDrawThingsVideoGeneration && ModelZoo.specificationForModel(id)?.version == .ltx2_3
+    }
+
     public var isDrawThingsImageUpscale: Bool {
         modelFormat == .drawthings && category == .imageUpscale
     }
@@ -235,7 +242,9 @@ public struct AIModel: Identifiable, Codable, Sendable {
 
     public var imageGenerationResolution: Int? {
         guard isDrawThingsImageGeneration else { return nil }
-        return id.contains("sd_xl") || id.contains("flux") ? 768 : 512
+        if id.hasPrefix("sd_xl_turbo") { return 512 }
+        return id.contains("sd_xl") || id.contains("flux") || id.hasPrefix("ssd_1b")
+            || id.hasPrefix("playground_v2.5") || id.hasPrefix("sd3_medium_3.5") ? 768 : 512
     }
 
     public var isDependencyOnly: Bool {
@@ -363,6 +372,8 @@ public struct ModelData {
 
     public static func isModelFullyAvailableLocally(_ model: AIModel) -> Bool {
         if model.modelFormat == .drawthings {
+            // Bundled community models must be resolved before querying ModelZoo's mapping.
+            _ = try? MediaGenerationEnvironment.default.resolveModel(model.id, offline: true)
             let allFiles: [String]
             if let specification = ModelZoo.specificationForModel(model.id) {
                 var seen = Set<String>()
@@ -1609,71 +1620,7 @@ public static let models: [AIModel] = [
         modelFormat: .gguf,
         additionalFiles: []
     ),
-    // Granite 4.2 3B Models (IBM)
-    AIModel(
-        name: "Granite 4.2 3B (Q2_K)",
-        description: "IBM Granite 4.2 3B reasoning model with Q2_K quantization. Smallest size with built-in chain-of-thought thinking. 128k context. (1.46GB)",
-        url: "https://huggingface.co/ibm-granite/granite-4.2-3b-GGUF/resolve/c40945d71cd90f249a56985e8155551a9188dc30/granite-4.2-3b-Q2_K.gguf?download=true",
-        category: .text,
-        sizeBytes: 1455736352,
-        source: "IBM Granite",
-        supportsVision: false,
-        supportsAudio: false,
-        supportsThinking: true,
-        supportsGpu: true,
-        requirements: ModelRequirements(minRamGB: 2, recommendedRamGB: 3),
-        contextWindowSize: 131072,
-        modelFormat: .gguf,
-        additionalFiles: []
-    ),
-    AIModel(
-        name: "Granite 4.2 3B (Q3_K_S)",
-        description: "IBM Granite 4.2 3B reasoning model with Q3_K_S quantization. Balanced size with built-in chain-of-thought thinking. 128k context. (1.68GB)",
-        url: "https://huggingface.co/ibm-granite/granite-4.2-3b-GGUF/resolve/c40945d71cd90f249a56985e8155551a9188dc30/granite-4.2-3b-Q3_K_S.gguf?download=true",
-        category: .text,
-        sizeBytes: 1677207072,
-        source: "IBM Granite",
-        supportsVision: false,
-        supportsAudio: false,
-        supportsThinking: true,
-        supportsGpu: true,
-        requirements: ModelRequirements(minRamGB: 3, recommendedRamGB: 4),
-        contextWindowSize: 131072,
-        modelFormat: .gguf,
-        additionalFiles: []
-    ),
-    AIModel(
-        name: "Granite 4.2 3B (Q3_K_M)",
-        description: "IBM Granite 4.2 3B reasoning model with Q3_K_M quantization. Good quality with built-in chain-of-thought thinking. 128k context. (1.84GB)",
-        url: "https://huggingface.co/ibm-granite/granite-4.2-3b-GGUF/resolve/c40945d71cd90f249a56985e8155551a9188dc30/granite-4.2-3b-Q3_K_M.gguf?download=true",
-        category: .text,
-        sizeBytes: 1835968032,
-        source: "IBM Granite",
-        supportsVision: false,
-        supportsAudio: false,
-        supportsThinking: true,
-        supportsGpu: true,
-        requirements: ModelRequirements(minRamGB: 3, recommendedRamGB: 4),
-        contextWindowSize: 131072,
-        modelFormat: .gguf,
-        additionalFiles: []
-    ),
-    AIModel(
-        name: "Granite 4.2 3B (Q3_K_L)",
-        description: "IBM Granite 4.2 3B reasoning model with Q3_K_L quantization. Better quality with built-in chain-of-thought thinking. 128k context. (1.97GB)",
-        url: "https://huggingface.co/ibm-granite/granite-4.2-3b-GGUF/resolve/c40945d71cd90f249a56985e8155551a9188dc30/granite-4.2-3b-Q3_K_L.gguf?download=true",
-        category: .text,
-        sizeBytes: 1974576672,
-        source: "IBM Granite",
-        supportsVision: false,
-        supportsAudio: false,
-        supportsThinking: true,
-        supportsGpu: true,
-        requirements: ModelRequirements(minRamGB: 3, recommendedRamGB: 4),
-        contextWindowSize: 131072,
-        modelFormat: .gguf,
-        additionalFiles: []
-    ),
+    // Granite 4.2 3B Models (IBM). Q4_0 is the smallest listed variant.
     AIModel(
         name: "Granite 4.2 3B (Q4_0)",
         description: "IBM Granite 4.2 3B reasoning model with Q4_0 quantization. Standard 4-bit balance with built-in chain-of-thought thinking. 128k context. (2.13GB)",
@@ -4057,6 +4004,93 @@ public static let models: [AIModel] = [
         additionalFiles: []
     ),
 
+    // Quantized community image models; download sizes are estimates including dependencies.
+    AIModel(
+        id: "sd_xl_turbo_q6p_q8p.ckpt",
+        name: "SDXL Turbo (8-bit)",
+        description: "Fast SDXL image generation in 1–4 steps at 512×512. Approximate download: 3.9 GB including shared encoders.",
+        url: "https://huggingface.co/stabilityai/sdxl-turbo",
+        category: .imageGeneration,
+        sizeBytes: 3_900_000_000,
+        source: "Stability AI / Draw Things",
+        supportsVision: false,
+        supportsAudio: false,
+        supportsThinking: false,
+        supportsGpu: true,
+        requirements: ModelRequirements(minRamGB: 6, recommendedRamGB: 8),
+        contextWindowSize: 0,
+        modelFormat: .drawthings,
+        additionalFiles: []
+    ),
+    AIModel(
+        id: "ssd_1b_q6p_q8p.ckpt",
+        name: "SSD-1B (8-bit)",
+        description: "Compact SDXL model from Segmind for efficient image generation. Approximate download: 3.0 GB including shared encoders.",
+        url: "https://huggingface.co/segmind/SSD-1B",
+        category: .imageGeneration,
+        sizeBytes: 3_000_000_000,
+        source: "Segmind / Draw Things",
+        supportsVision: false,
+        supportsAudio: false,
+        supportsThinking: false,
+        supportsGpu: true,
+        requirements: ModelRequirements(minRamGB: 6, recommendedRamGB: 8),
+        contextWindowSize: 0,
+        modelFormat: .drawthings,
+        additionalFiles: []
+    ),
+    AIModel(
+        id: "playground_v2.5_q6p_q8p.ckpt",
+        name: "Playground v2.5 (8-bit)",
+        description: "Aesthetic image generation from Playground AI. Approximate download: 3.9 GB including shared encoders.",
+        url: "https://huggingface.co/playgroundai/playground-v2.5-1024px-aesthetic",
+        category: .imageGeneration,
+        sizeBytes: 3_900_000_000,
+        source: "Playground AI / Draw Things",
+        supportsVision: false,
+        supportsAudio: false,
+        supportsThinking: false,
+        supportsGpu: true,
+        requirements: ModelRequirements(minRamGB: 8, recommendedRamGB: 12),
+        contextWindowSize: 0,
+        modelFormat: .drawthings,
+        additionalFiles: []
+    ),
+    AIModel(
+        id: "sd3_medium_3.5_q8p.ckpt",
+        name: "Stable Diffusion 3.5 Medium (8-bit)",
+        description: "Stability AI image model with CLIP and quantized T5 encoders. Approximate download: 8.5 GB. Target 16GB devices; peak memory depends on generation settings.",
+        url: "https://huggingface.co/stabilityai/stable-diffusion-3.5-medium",
+        category: .imageGeneration,
+        sizeBytes: 8_500_000_000,
+        source: "Stability AI / Draw Things",
+        supportsVision: false,
+        supportsAudio: false,
+        supportsThinking: false,
+        supportsGpu: true,
+        requirements: ModelRequirements(minRamGB: 16, recommendedRamGB: 16),
+        contextWindowSize: 0,
+        modelFormat: .drawthings,
+        additionalFiles: []
+    ),
+    AIModel(
+        id: "flux_1_dev_q5p.ckpt",
+        name: "FLUX.1 [dev] (5-bit)",
+        description: "Black Forest Labs image model with quantized T5 and CLIP encoders. Approximate download: 13.7 GB. Target 16GB devices; peak memory depends on generation settings.",
+        url: "https://huggingface.co/black-forest-labs/FLUX.1-dev",
+        category: .imageGeneration,
+        sizeBytes: 13_648_674_816,
+        source: "Black Forest Labs / Draw Things",
+        supportsVision: false,
+        supportsAudio: false,
+        supportsThinking: false,
+        supportsGpu: true,
+        requirements: ModelRequirements(minRamGB: 16, recommendedRamGB: 16),
+        contextWindowSize: 0,
+        modelFormat: .drawthings,
+        additionalFiles: []
+    ),
+
     // MARK: - EmbeddingGemma 300M LiteRT — Embedding Models for RAG
 
     AIModel(
@@ -4135,6 +4169,27 @@ public static let models: [AIModel] = [
             "https://huggingface.co/litert-community/embeddinggemma-300m/resolve/29888fcee3216acadc7e844906e5fe0d79a61875/sentencepiece.model?download=true"
         ]
     ),
+
+    // MARK: - EmbeddingGemma 2 740M LiteRT-LM — Multimodal Embedding Model
+
+    AIModel(
+        id: "embeddinggemma-2-740m-litertlm",
+        name: "EmbeddingGemma 2 740M",
+        description: "Google EmbeddingGemma 2 multimodal embedding model (LiteRT-LM). Maps text, images and audio into one space, so memory can store and search recorded or uploaded audio and images alongside text. (485 MB)",
+        url: "https://huggingface.co/litert-community/embeddinggemma-2-740m-litert-lm/resolve/24d962e906c7d332c6428e71c9676855024569e2/embeddinggemma-2-740m.litertlm?download=true",
+        category: .embedding,
+        sizeBytes: 484_622_336,
+        source: "Google / LiteRT Community",
+        supportsVision: true,
+        supportsAudio: true,
+        supportsThinking: false,
+        supportsGpu: true,
+        supportsMtp: false,
+        requirements: ModelRequirements(minRamGB: 3, recommendedRamGB: 4),
+        contextWindowSize: 8192,
+        modelFormat: .litertlm,
+        additionalFiles: []
+    ),
     AIModel(
         id: "svd_i2v_xt_1.0_q6p_q8p.ckpt",
         name: "Stable Video Diffusion (XT)",
@@ -4199,6 +4254,7 @@ public static let models: [AIModel] = [
         contextWindowSize: 512,
         modelFormat: .drawthings
     ),
+
     AIModel(
         id: "realesrgan_x4plus_f16.ckpt",
         name: "Real-ESRGAN X4+",

@@ -79,8 +79,35 @@ final class RagServiceManager: ObservableObject {
             return
         }
 
+        let modelFiles = (try? FileManager.default.contentsOfDirectory(at: modelDir, includingPropertiesForKeys: nil)) ?? []
+
+        if model.modelFormat == .litertlm {
+            guard let bundleURL = modelFiles.first(where: { $0.pathExtension.lowercased() == "litertlm" }) else {
+                print("❌ [RAG] initialize — no .litertlm file in \(modelDir.path)")
+                statusMessage = "Embedding model not downloaded."
+                return
+            }
+            do {
+                try await embeddingService.initializeLiteRTLM(
+                    modelID: modelId,
+                    modelPath: bundleURL.path,
+                    modelName: model.name,
+                    cacheDir: modelDir.path
+                )
+                initializedModelName = modelId
+                isReady = true
+                statusMessage = AppSettings.shared.localized("embedding_enabled")
+                await restoreGlobalMemory()
+            } catch {
+                isReady = false
+                statusMessage = "Failed to load embedding model: \(error.localizedDescription)"
+                print("❌ [RAG] initialize — LiteRT-LM FAILED: \(error.localizedDescription)")
+            }
+            return
+        }
+
         let tfliteURL: URL
-        if let found = (try? FileManager.default.contentsOfDirectory(at: modelDir, includingPropertiesForKeys: nil))?.first(where: { $0.pathExtension.lowercased() == "tflite" }) {
+        if let found = modelFiles.first(where: { $0.pathExtension.lowercased() == "tflite" }) {
             tfliteURL = found
         } else {
             print("❌ [RAG] initialize — no .tflite file in \(modelDir.path)")
@@ -249,7 +276,7 @@ final class RagServiceManager: ObservableObject {
 
         for doc in memoryStore.documents {
             print("🔍 [Memory] reembedGlobalMemory — chunking doc: \(doc.fileName) (len=\(doc.content.count))")
-            await ragService.addRawDocument(chatId: globalMemoryChatId, content: doc.content, fileName: doc.fileName)
+            await addToGlobalPool(doc)
         }
         await ragService.embedAllPending(chatId: globalMemoryChatId, service: embeddingService)
         print("✅ [Memory] reembedGlobalMemory — DONE, all \(memoryStore.documents.count) documents re-embedded")
@@ -260,8 +287,11 @@ final class RagServiceManager: ObservableObject {
     private func restoreGlobalMemory() async {
         let docs = memoryStore.documents
         print("ℹ️ [Memory] restoreGlobalMemory — restoring \(docs.count) documents into RAG")
+        // Rebuild from scratch so a model switch never mixes vectors from two embedding spaces.
+        await ragService.clear(chatId: globalMemoryChatId)
+        populatedChatIds.removeAll()
         for doc in docs {
-            await ragService.addRawDocument(chatId: globalMemoryChatId, content: doc.content, fileName: doc.fileName)
+            await addToGlobalPool(doc)
         }
         if isReady {
             await ragService.embedAllPending(chatId: globalMemoryChatId, service: embeddingService)
@@ -270,6 +300,10 @@ final class RagServiceManager: ObservableObject {
         } else {
             print("⚠️ [Memory] restoreGlobalMemory — chunked but NOT embedded (isReady=false)")
         }
+    }
+
+    private func addToGlobalPool(_ doc: MemoryDocument) async {
+        await ragService.addRawDocument(chatId: globalMemoryChatId, content: doc.content, fileName: doc.fileName)
     }
 
 }

@@ -105,7 +105,7 @@ fun FeatureModelSettingsSheet(
         canSelectAccelerator && !isGemma4_12B
     }
     val defaultUseGpu = remember(selectedModel, isGemma4_12B) {
-        if (isGemma4_12B) true else if (isPhi4Mini) false else selectedModel?.supportsGpu == true
+        if (selectedModel?.modelFormat == "gguf") false else if (isGemma4_12B) true else if (isPhi4Mini) false else selectedModel?.supportsGpu == true
     }
     val canUseNpuForSelectedModel by remember(selectedModel, isPhi4Mini) {
         derivedStateOf {
@@ -129,9 +129,7 @@ fun FeatureModelSettingsSheet(
     }
     var useNpu by remember(initialSelectedBackend, initialSelectedNpuDeviceId, selectedModel) {
         mutableStateOf(
-            initialSelectedNpuDeviceId != null ||
-                (initialSelectedBackend == null && defaultUseGpu &&
-                    selectedModel?.modelFormat == "gguf" && DeviceInfo.isLlamaCppHexagonSupported())
+            initialSelectedNpuDeviceId != null
         )
     }
     var gpuLayers by remember { mutableStateOf(999) }
@@ -154,8 +152,16 @@ fun FeatureModelSettingsSheet(
             if (saved != null) {
                 gpuLayers = saved.nGpuLayers.coerceIn(0, gpuLayerLimit)
                 enableThinking = saved.enableThinking
+                if (currentlyLoadedModel?.name != model.name) {
+                    useGpu = saved.backend == "GPU"
+                    useNpu = saved.backend == "GPU" && saved.deviceId == "dev0"
+                }
             } else {
                 gpuLayers = gpuLayerLimit
+                if (currentlyLoadedModel?.name != model.name) {
+                    useGpu = defaultUseGpu
+                    useNpu = false
+                }
             }
         }
     }
@@ -456,15 +462,12 @@ fun FeatureModelSettingsSheet(
                                         val deviceId = if (useNpu) "dev0" else null
                                         scope.launch(Dispatchers.IO) {
                                             try {
-                                                val cfg = ModelConfig(
+                                                val cfg = (modelPrefs.getModelConfig(model.name)
+                                                    ?: com.llmhub.llmhub.data.defaultConfigForModel(model)).copy(
                                                     maxTokens = finalMax,
-                                                    topK = 64,
-                                                    topP = 0.95f,
-                                                    temperature = 1.0f,
+                                                    contextWindow = finalMax,
                                                     backend = backend?.name,
                                                     deviceId = deviceId,
-                                                    disableVision = false,
-                                                    disableAudio = false,
                                                     nGpuLayers = gpuLayers,
                                                     enableThinking = enableThinking
                                                 )
@@ -531,6 +534,18 @@ fun FeatureModelSettingsSheet(
                                     maxTokensValue = intVal
                                     maxTokensText = intVal.toString()
                                     onMaxTokensChanged(intVal)
+                                    selectedModel?.let { m ->
+                                        scope.launch(Dispatchers.IO) {
+                                            try {
+                                                val cfg = (modelPrefs.getModelConfig(m.name)
+                                                    ?: com.llmhub.llmhub.data.defaultConfigForModel(m)).copy(
+                                                    maxTokens = intVal,
+                                                    contextWindow = intVal
+                                                )
+                                                modelPrefs.setModelConfig(m.name, cfg)
+                                            } catch (_: Exception) {}
+                                        }
+                                    }
                                 },
                                 valueRange = 1f..baseMaxTokensCap.toFloat(),
                                 modifier = Modifier.weight(1f).height(36.dp),
@@ -550,6 +565,18 @@ fun FeatureModelSettingsSheet(
                                     maxTokensText = intVal.toString()
                                     maxTokensValue = intVal
                                     onMaxTokensChanged(intVal)
+                                    selectedModel?.let { m ->
+                                        scope.launch(Dispatchers.IO) {
+                                            try {
+                                                val cfg = (modelPrefs.getModelConfig(m.name)
+                                                    ?: com.llmhub.llmhub.data.defaultConfigForModel(m)).copy(
+                                                    maxTokens = intVal,
+                                                    contextWindow = intVal
+                                                )
+                                                modelPrefs.setModelConfig(m.name, cfg)
+                                            } catch (_: Exception) {}
+                                        }
+                                    }
                                 },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 singleLine = true,

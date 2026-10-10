@@ -52,6 +52,29 @@ object DeviceInfo {
     )
 
     /**
+     * SoC tag used in the chip-specific EmbeddingGemma 2 file names
+     * (e.g. `embeddinggemma-2-740m_Qualcomm_SM8650.litertlm`), or null when no
+     * NPU build exists for this device.
+     */
+    fun getEmbeddingGemma2NpuTag(): String? {
+        val soc = getDeviceSoc().uppercase().replace(Regex("[^A-Z0-9]"), "")
+        return when (soc) {
+            "TENSORG5" -> "Google_Tensor_G5"
+            "TENSORG6" -> "Google_Tensor_G6"
+            "SM8550", "SM8550P" -> "Qualcomm_SM8550"
+            "SM8650", "SM8650P" -> "Qualcomm_SM8650"
+            "SM8750", "SM8750P" -> "Qualcomm_SM8750"
+            "SM8850", "SM8850P" -> "Qualcomm_SM8850"
+            "QCS8275" -> "Qualcomm_QCS8275"
+            else -> when {
+                soc.startsWith("MT6991") -> "MediaTek_MT6991"
+                soc.startsWith("MT6993") -> "MediaTek_MT6993"
+                else -> null
+            }
+        }
+    }
+
+    /**
      * Normalize chipset suffix for SD QNN package naming.
      * Current hosted SD-QNN variants are keyed as 8gen1 and 8gen2, where 8gen2 is
      * also used for newer chips (8gen3/8gen4/8s/Elite class) for compatibility.
@@ -110,6 +133,20 @@ object ModelData {
             requirements = ModelRequirements(minRamGB = 4, recommendedRamGB = 6),
             contextWindowSize = 0,
             modelFormat = "upscaler_bin"
+        ),
+        LLMModel(
+            name = "Real-ESRGAN General x4v3 (GPU/CPU)",
+            description = "Real-ESRGAN general x4v3 upscaler powered by LiteRT. Fast 4x super-resolution with GPU acceleration and automatic CPU fallback. Works on all devices. ~3.5 MB download.",
+            url = "https://huggingface.co/litert-community/real-esrgan-x4v3-litert/resolve/0a6fc35ba3e34e80b53f43089c1d2b612d33bea9/realesr_general_x4v3.tflite",
+            category = "image_upscale",
+            sizeBytes = 3549456L,
+            source = "litert-community/real-esrgan-x4v3-litert",
+            supportsVision = false,
+            supportsAudio = false,
+            supportsGpu = true,
+            requirements = ModelRequirements(minRamGB = 3, recommendedRamGB = 4),
+            contextWindowSize = 0,
+            modelFormat = "tflite"
         )
     )
 
@@ -887,6 +924,33 @@ object ModelData {
     )
 
     val ttsModels = listOf(
+        LLMModel(
+            name = PocketTtsModel.NAME,
+            description = "PocketTTS.cpp: English speech with on-device voice cloning. Import a reference clip in Settings or Text to Speech.",
+            url = PocketTtsModel.url(PocketTtsModel.coreFiles.keys.first()),
+            category = "tts",
+            sizeBytes = PocketTtsModel.coreFiles.values.sum(),
+            source = "Kyutai · CC-BY-4.0 / PocketTTS.cpp · MIT",
+            supportsVision = false, supportsAudio = true, supportsGpu = false,
+            requirements = ModelRequirements(minRamGB = 2, recommendedRamGB = 4),
+            contextWindowSize = 0, modelFormat = "onnx",
+            additionalFiles = PocketTtsModel.coreFiles.keys.drop(1).map(PocketTtsModel::url)
+        ),
+        LLMModel(
+            name = SupertonicModel.NAME,
+            description = "Supertonic 3: offline speech in 31 languages. Download preset voices in Settings.",
+            url = "${SupertonicModel.BASE_URL}/onnx/duration_predictor.onnx",
+            category = "tts",
+            sizeBytes = SupertonicModel.coreFiles.values.sum(),
+            source = "Supertone · OpenRAIL-M",
+            supportsVision = false,
+            supportsAudio = true,
+            supportsGpu = false,
+            requirements = ModelRequirements(minRamGB = 2, recommendedRamGB = 4),
+            contextWindowSize = 0,
+            modelFormat = "onnx",
+            additionalFiles = SupertonicModel.coreFiles.keys.drop(1).map { "${SupertonicModel.BASE_URL}/onnx/$it" }
+        ),
         LLMModel(
             name = "Kokoro-82M (ONNX Quantized)",
             description = "8-bit integer quantized Kokoro-82M ONNX model. Good balance of speed and size. ~92 MB download.",
@@ -2514,157 +2578,6 @@ object ModelData {
             additionalFiles = listOf(
                 "https://huggingface.co/ibm-granite/granite-4.2-30b-GGUF/resolve/27b350a791e81d9a4d1ddca1c49282e9ec533768/granite-4.2-30b-bf16-00002-of-00002.gguf?download=true"
             )
-        ),
-
-        // Muse Glimmer 30B Models (Meta via Unsloth GGUF)
-        // Enabled on Android via GenieX AAR (supports muse-glimmer architecture).
-        // KQuant/DFlash sidecars are intentionally excluded because GenieX does not
-        // expose DFlash for multimodal GGUFs.
-        LLMModel(
-            name = "Muse Glimmer 30B (UD-IQ2_XXS)",
-            description = "Meta's 30B vision-language agent model. UD-IQ2_XXS quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 10.75 GB download.",
-            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-IQ2_XXS.gguf?download=true",
-            category = "multimodal",
-            sizeBytes = 10746373152L,
-            source = "Meta via Unsloth",
-            supportsVision = true,
-            supportsThinking = true,
-            supportsGpu = true,
-            supportsMtp = false,
-            requirements = ModelRequirements(minRamGB = 18, recommendedRamGB = 24),
-            contextWindowSize = 131072,
-            modelFormat = "gguf"
-        ),
-        LLMModel(
-            name = "Muse Glimmer 30B (UD-IQ2_XS)",
-            description = "Meta's 30B vision-language agent model. UD-IQ2_XS quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 11.51 GB download.",
-            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-IQ2_XS.gguf?download=true",
-            category = "multimodal",
-            sizeBytes = 11513104416L,
-            source = "Meta via Unsloth",
-            supportsVision = true,
-            supportsThinking = true,
-            supportsGpu = true,
-            supportsMtp = false,
-            requirements = ModelRequirements(minRamGB = 18, recommendedRamGB = 24),
-            contextWindowSize = 131072,
-            modelFormat = "gguf"
-        ),
-        LLMModel(
-            name = "Muse Glimmer 30B (UD-IQ2_M)",
-            description = "Meta's 30B vision-language agent model. UD-IQ2_M quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 12.26 GB download.",
-            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-IQ2_M.gguf?download=true",
-            category = "multimodal",
-            sizeBytes = 12255421472L,
-            source = "Meta via Unsloth",
-            supportsVision = true,
-            supportsThinking = true,
-            supportsGpu = true,
-            supportsMtp = false,
-            requirements = ModelRequirements(minRamGB = 20, recommendedRamGB = 24),
-            contextWindowSize = 131072,
-            modelFormat = "gguf"
-        ),
-        LLMModel(
-            name = "Muse Glimmer 30B (UD-Q2_K_XL)",
-            description = "Meta's 30B vision-language agent model. UD-Q2_K_XL quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 12.44 GB download.",
-            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-Q2_K_XL.gguf?download=true",
-            category = "multimodal",
-            sizeBytes = 12444212256L,
-            source = "Meta via Unsloth",
-            supportsVision = true,
-            supportsThinking = true,
-            supportsGpu = true,
-            supportsMtp = false,
-            requirements = ModelRequirements(minRamGB = 20, recommendedRamGB = 24),
-            contextWindowSize = 131072,
-            modelFormat = "gguf"
-        ),
-        LLMModel(
-            name = "Muse Glimmer 30B (UD-IQ3_XXS)",
-            description = "Meta's 30B vision-language agent model. UD-IQ3_XXS quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 13.13 GB download.",
-            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-IQ3_XXS.gguf?download=true",
-            category = "multimodal",
-            sizeBytes = 13130658848L,
-            source = "Meta via Unsloth",
-            supportsVision = true,
-            supportsThinking = true,
-            supportsGpu = true,
-            supportsMtp = false,
-            requirements = ModelRequirements(minRamGB = 20, recommendedRamGB = 24),
-            contextWindowSize = 131072,
-            modelFormat = "gguf"
-        ),
-        LLMModel(
-            name = "Muse Glimmer 30B (UD-Q3_K_XL)",
-            description = "Meta's 30B vision-language agent model. UD-Q3_K_XL quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 13.36 GB download.",
-            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-Q3_K_XL.gguf?download=true",
-            category = "multimodal",
-            sizeBytes = 13360983072L,
-            source = "Meta via Unsloth",
-            supportsVision = true,
-            supportsThinking = true,
-            supportsGpu = true,
-            supportsMtp = false,
-            requirements = ModelRequirements(minRamGB = 20, recommendedRamGB = 24),
-            contextWindowSize = 131072,
-            modelFormat = "gguf"
-        ),
-        LLMModel(
-            name = "Muse Glimmer 30B (UD-IQ3_M)",
-            description = "Meta's 30B vision-language agent model. UD-IQ3_M quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 14.12 GB download.",
-            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-IQ3_M.gguf?download=true",
-            category = "multimodal",
-            sizeBytes = 14122705696L,
-            source = "Meta via Unsloth",
-            supportsVision = true,
-            supportsThinking = true,
-            supportsGpu = true,
-            supportsMtp = false,
-            requirements = ModelRequirements(minRamGB = 20, recommendedRamGB = 24),
-            contextWindowSize = 131072,
-            modelFormat = "gguf"
-        ),
-        LLMModel(
-            name = "Muse Glimmer 30B (UD-Q4_K_XL)",
-            description = "Meta's 30B vision-language agent model. UD-Q4_K_XL quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 15.88 GB download.",
-            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-Q4_K_XL.gguf?download=true",
-            category = "multimodal",
-            sizeBytes = 15878222368L,
-            source = "Meta via Unsloth",
-            supportsVision = true,
-            supportsThinking = true,
-            supportsGpu = true,
-            supportsMtp = false,
-            requirements = ModelRequirements(minRamGB = 24, recommendedRamGB = 32),
-            contextWindowSize = 131072,
-            modelFormat = "gguf"
-        ),
-        LLMModel(
-            name = "Muse Glimmer 30B (Vision Projector, BF16)",
-            description = "Vision Projector (mmproj) required to enable image input for Muse Glimmer 30B GGUF models. BF16 variant. 3.85 GB download.",
-            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/mmproj-Muse-Glimmer-30B-BF16.gguf?download=true",
-            category = "multimodal",
-            sizeBytes = 3849173728L,
-            source = "Meta via Unsloth",
-            supportsVision = true,
-            supportsGpu = true,
-            requirements = ModelRequirements(minRamGB = 4, recommendedRamGB = 6),
-            contextWindowSize = 0,
-            modelFormat = "gguf"
-        ),
-        LLMModel(
-            name = "Muse Glimmer 30B (Vision Projector, Q8_0)",
-            description = "Vision Projector (mmproj) required to enable image input for Muse Glimmer 30B GGUF models. Q8_0 variant for a smaller download. 2.05 GB download.",
-            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/mmproj-Muse-Glimmer-30B-Q8_0.gguf?download=true",
-            category = "multimodal",
-            sizeBytes = 2051685088L,
-            source = "Meta via Unsloth",
-            supportsVision = true,
-            supportsGpu = true,
-            requirements = ModelRequirements(minRamGB = 3, recommendedRamGB = 4),
-            contextWindowSize = 0,
-            modelFormat = "gguf"
         ),
 
         // Phi-4 Mini updated to user-provided litertlm link
@@ -4895,6 +4808,157 @@ object ModelData {
             modelFormat = "gguf"
         ),
 
+        // Muse Glimmer 30B Models (Meta via Unsloth GGUF)
+        // Enabled on Android via GenieX AAR (supports muse-glimmer architecture).
+        // KQuant/DFlash sidecars are intentionally excluded because GenieX does not
+        // expose DFlash for multimodal GGUFs.
+        LLMModel(
+            name = "Muse Glimmer 30B (UD-IQ2_XXS)",
+            description = "Meta's 30B vision-language agent model. UD-IQ2_XXS quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 10.75 GB download.",
+            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-IQ2_XXS.gguf?download=true",
+            category = "multimodal",
+            sizeBytes = 10746373152L,
+            source = "Meta via Unsloth",
+            supportsVision = true,
+            supportsThinking = true,
+            supportsGpu = true,
+            supportsMtp = false,
+            requirements = ModelRequirements(minRamGB = 18, recommendedRamGB = 24),
+            contextWindowSize = 131072,
+            modelFormat = "gguf"
+        ),
+        LLMModel(
+            name = "Muse Glimmer 30B (UD-IQ2_XS)",
+            description = "Meta's 30B vision-language agent model. UD-IQ2_XS quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 11.51 GB download.",
+            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-IQ2_XS.gguf?download=true",
+            category = "multimodal",
+            sizeBytes = 11513104416L,
+            source = "Meta via Unsloth",
+            supportsVision = true,
+            supportsThinking = true,
+            supportsGpu = true,
+            supportsMtp = false,
+            requirements = ModelRequirements(minRamGB = 18, recommendedRamGB = 24),
+            contextWindowSize = 131072,
+            modelFormat = "gguf"
+        ),
+        LLMModel(
+            name = "Muse Glimmer 30B (UD-IQ2_M)",
+            description = "Meta's 30B vision-language agent model. UD-IQ2_M quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 12.26 GB download.",
+            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-IQ2_M.gguf?download=true",
+            category = "multimodal",
+            sizeBytes = 12255421472L,
+            source = "Meta via Unsloth",
+            supportsVision = true,
+            supportsThinking = true,
+            supportsGpu = true,
+            supportsMtp = false,
+            requirements = ModelRequirements(minRamGB = 20, recommendedRamGB = 24),
+            contextWindowSize = 131072,
+            modelFormat = "gguf"
+        ),
+        LLMModel(
+            name = "Muse Glimmer 30B (UD-Q2_K_XL)",
+            description = "Meta's 30B vision-language agent model. UD-Q2_K_XL quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 12.44 GB download.",
+            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-Q2_K_XL.gguf?download=true",
+            category = "multimodal",
+            sizeBytes = 12444212256L,
+            source = "Meta via Unsloth",
+            supportsVision = true,
+            supportsThinking = true,
+            supportsGpu = true,
+            supportsMtp = false,
+            requirements = ModelRequirements(minRamGB = 20, recommendedRamGB = 24),
+            contextWindowSize = 131072,
+            modelFormat = "gguf"
+        ),
+        LLMModel(
+            name = "Muse Glimmer 30B (UD-IQ3_XXS)",
+            description = "Meta's 30B vision-language agent model. UD-IQ3_XXS quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 13.13 GB download.",
+            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-IQ3_XXS.gguf?download=true",
+            category = "multimodal",
+            sizeBytes = 13130658848L,
+            source = "Meta via Unsloth",
+            supportsVision = true,
+            supportsThinking = true,
+            supportsGpu = true,
+            supportsMtp = false,
+            requirements = ModelRequirements(minRamGB = 20, recommendedRamGB = 24),
+            contextWindowSize = 131072,
+            modelFormat = "gguf"
+        ),
+        LLMModel(
+            name = "Muse Glimmer 30B (UD-Q3_K_XL)",
+            description = "Meta's 30B vision-language agent model. UD-Q3_K_XL quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 13.36 GB download.",
+            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-Q3_K_XL.gguf?download=true",
+            category = "multimodal",
+            sizeBytes = 13360983072L,
+            source = "Meta via Unsloth",
+            supportsVision = true,
+            supportsThinking = true,
+            supportsGpu = true,
+            supportsMtp = false,
+            requirements = ModelRequirements(minRamGB = 20, recommendedRamGB = 24),
+            contextWindowSize = 131072,
+            modelFormat = "gguf"
+        ),
+        LLMModel(
+            name = "Muse Glimmer 30B (UD-IQ3_M)",
+            description = "Meta's 30B vision-language agent model. UD-IQ3_M quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 14.12 GB download.",
+            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-IQ3_M.gguf?download=true",
+            category = "multimodal",
+            sizeBytes = 14122705696L,
+            source = "Meta via Unsloth",
+            supportsVision = true,
+            supportsThinking = true,
+            supportsGpu = true,
+            supportsMtp = false,
+            requirements = ModelRequirements(minRamGB = 20, recommendedRamGB = 24),
+            contextWindowSize = 131072,
+            modelFormat = "gguf"
+        ),
+        LLMModel(
+            name = "Muse Glimmer 30B (UD-Q4_K_XL)",
+            description = "Meta's 30B vision-language agent model. UD-Q4_K_XL quantization. 131k context. Requires a separate Muse Glimmer Vision Projector for image input. 15.88 GB download.",
+            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-Q4_K_XL.gguf?download=true",
+            category = "multimodal",
+            sizeBytes = 15878222368L,
+            source = "Meta via Unsloth",
+            supportsVision = true,
+            supportsThinking = true,
+            supportsGpu = true,
+            supportsMtp = false,
+            requirements = ModelRequirements(minRamGB = 24, recommendedRamGB = 32),
+            contextWindowSize = 131072,
+            modelFormat = "gguf"
+        ),
+        LLMModel(
+            name = "Muse Glimmer 30B (Vision Projector, BF16)",
+            description = "Vision Projector (mmproj) required to enable image input for Muse Glimmer 30B GGUF models. BF16 variant. 3.85 GB download.",
+            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/mmproj-Muse-Glimmer-30B-BF16.gguf?download=true",
+            category = "multimodal",
+            sizeBytes = 3849173728L,
+            source = "Meta via Unsloth",
+            supportsVision = true,
+            supportsGpu = true,
+            requirements = ModelRequirements(minRamGB = 4, recommendedRamGB = 6),
+            contextWindowSize = 0,
+            modelFormat = "gguf"
+        ),
+        LLMModel(
+            name = "Muse Glimmer 30B (Vision Projector, Q8_0)",
+            description = "Vision Projector (mmproj) required to enable image input for Muse Glimmer 30B GGUF models. Q8_0 variant for a smaller download. 2.05 GB download.",
+            url = "https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF/resolve/faa5b025c584459c13febfa5c59883516710ae39/mmproj-Muse-Glimmer-30B-Q8_0.gguf?download=true",
+            category = "multimodal",
+            sizeBytes = 2051685088L,
+            source = "Meta via Unsloth",
+            supportsVision = true,
+            supportsGpu = true,
+            requirements = ModelRequirements(minRamGB = 3, recommendedRamGB = 4),
+            contextWindowSize = 0,
+            modelFormat = "gguf"
+        ),
+
         // WhisperKit ASR Models (TFLite + QNN NPU acceleration via argmaxinc/WhisperKit)
         // Each model needs 5 files: AudioEncoder.tflite, MelSpectrogram.tflite, TextDecoder.tflite,
         // tokenizer.json, config.json — all required by the WhisperKit JNI layer.
@@ -5040,7 +5104,66 @@ object ModelData {
         )
     )
 
-    val models: List<LLMModel> = baseModels + upscalerModels + ttsModels + musicGenerationModels + (if (DeviceInfo.getChipsetSuffix() in setOf("8gen3", "8gen4", "8gen5")) sdxlModels else emptyList())
+    private const val EMBEDDING_GEMMA_2_REPO =
+        "https://huggingface.co/litert-community/embeddinggemma-2-740m-litert-lm/resolve/24d962e906c7d332c6428e71c9676855024569e2"
+
+    private val embeddingGemma2NpuVariants = listOf(
+        Triple("Google_Tensor_G5", "Google Tensor G5", 657656500L),
+        Triple("Google_Tensor_G6", "Google Tensor G6", 615713460L),
+        Triple("MediaTek_MT6991", "MediaTek Dimensity 9400", 895008768L),
+        Triple("MediaTek_MT6993", "MediaTek Dimensity 9500", 864681984L),
+        Triple("Qualcomm_QCS8275", "Qualcomm QCS8275", 562888704L),
+        Triple("Qualcomm_SM8550", "Snapdragon 8 Gen 2", 562905088L),
+        Triple("Qualcomm_SM8650", "Snapdragon 8 Gen 3", 562659328L),
+        Triple("Qualcomm_SM8750", "Snapdragon 8 Elite", 543522816L),
+        Triple("Qualcomm_SM8850", "Snapdragon 8 Elite Gen 5", 559448064L),
+    )
+
+    val embeddingGemma2Models: List<LLMModel> = buildList {
+        add(
+            LLMModel(
+                name = "EmbeddingGemma 2 740M",
+                description = "Google EmbeddingGemma 2 multimodal embedding model (LiteRT-LM). Maps text, images and audio into one 768-dimensional space, so memory can store and search recorded or uploaded audio and images alongside text. Runs on CPU/GPU on any device. (485 MB)",
+                url = "$EMBEDDING_GEMMA_2_REPO/embeddinggemma-2-740m.litertlm?download=true",
+                category = "embedding",
+                sizeBytes = 484622336L,
+                source = "Google via LiteRT Community",
+                supportsVision = true,
+                supportsAudio = true,
+                supportsGpu = true,
+                requirements = ModelRequirements(minRamGB = 3, recommendedRamGB = 4),
+                contextWindowSize = 8192,
+                modelFormat = "litertlm"
+            )
+        )
+        val deviceTag = DeviceInfo.getEmbeddingGemma2NpuTag()
+        embeddingGemma2NpuVariants
+            .filter { (tag, _, _) -> tag == deviceTag }
+            .forEach { (tag, chipName, size) ->
+                add(
+                    LLMModel(
+                        name = "EmbeddingGemma 2 740M (NPU - $chipName)",
+                        description = "EmbeddingGemma 2 multimodal embedding model compiled for the $chipName NPU. Same text, image and audio memory support as the standard build with lower latency and power use. Only works on $chipName devices. (${size / (1024 * 1024)} MB)",
+                        url = "$EMBEDDING_GEMMA_2_REPO/embeddinggemma-2-740m_$tag.litertlm?download=true",
+                        category = "embedding",
+                        sizeBytes = size,
+                        source = "Google via LiteRT Community",
+                        supportsVision = true,
+                        supportsAudio = true,
+                        supportsGpu = false,
+                        requirements = ModelRequirements(minRamGB = 3, recommendedRamGB = 4),
+                        contextWindowSize = 8192,
+                        modelFormat = "litertlm"
+                    )
+                )
+            }
+    }
+
+    /** True for the chip-specific (NPU-compiled) EmbeddingGemma 2 builds. */
+    fun isEmbeddingGemma2NpuModel(model: LLMModel): Boolean =
+        model.modelFormat == "litertlm" && model.url.contains("embeddinggemma-2-740m_")
+
+    val models: List<LLMModel> = baseModels + embeddingGemma2Models + upscalerModels + ttsModels + musicGenerationModels + (if (DeviceInfo.getChipsetSuffix() in setOf("8gen3", "8gen4", "8gen5")) sdxlModels else emptyList())
 
 
     /**

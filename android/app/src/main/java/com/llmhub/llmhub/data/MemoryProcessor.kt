@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.llmhub.llmhub.embedding.RagServiceManager
+import java.io.File
 
 class MemoryProcessor(private val context: Context, private val db: LlmHubDatabase) {
     private val TAG = "MemoryProcessor"
@@ -162,6 +163,21 @@ class MemoryProcessor(private val context: Context, private val db: LlmHubDataba
         val processing = MutableStateFlow(false)
     }
 
+    /** Memory is text-only: drop image/audio entries, which can't be injected into chats. */
+    private suspend fun removeMediaMemories(list: List<MemoryDocument>): List<MemoryDocument> {
+        val (media, text) = list.partition { it.metadata == "image" || it.metadata == "audio" }
+        if (media.isEmpty()) return list
+        media.forEach { doc ->
+            db.memoryDao().delete(doc)
+            db.memoryDao().deleteChunksForDoc(doc.id)
+        }
+        File(context.filesDir, "memory_media").deleteRecursively()
+        ragManager.clearGlobalDocuments()
+        val remaining = db.memoryDao().getAllChunks()
+        if (remaining.isNotEmpty()) ragManager.restoreGlobalDocumentsFromChunks(remaining)
+        return text
+    }
+
     fun processPending() {
         CoroutineScope(Dispatchers.IO).launch {
             // mark processor as running
@@ -171,7 +187,7 @@ class MemoryProcessor(private val context: Context, private val db: LlmHubDataba
                 val job = ragManager.initializeAsync()
                 job.join()
 
-                val list = db.memoryDao().getAllMemory().first()
+                val list = removeMediaMemories(db.memoryDao().getAllMemory().first())
                 for (doc in list.filter { it.status == "PENDING" || it.status == "FAILED" }) {
                     try {
                         // mark in-progress
@@ -197,7 +213,7 @@ class MemoryProcessor(private val context: Context, private val db: LlmHubDataba
                                             Log.w(TAG, "Skipping processing for deleted doc ${doc.id}")
                                             break
                                         }
-                                val emb = mgr.generateEmbedding(chunkText)
+                                val emb = mgr.generateEmbedding(chunkText, isQuery = false)
                                 if (emb == null) {
                                     Log.w(TAG, "Failed to generate embedding for chunk $index of doc ${doc.id}")
                                     embeddingFailures++

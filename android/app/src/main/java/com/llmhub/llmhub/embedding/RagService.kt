@@ -79,7 +79,7 @@ class InMemoryRagService(private val embeddingService: EmbeddingService) : RagSe
                     Log.d(TAG, "Skipping very short chunk $index of '$fileName' (len=${trimmedChunk.length})")
                     continue
                 }
-                val embedding = embeddingService.generateEmbedding(chunk)
+                val embedding = embeddingService.generateEmbedding(chunk, isQuery = false)
                 if (embedding != null) {
                     // Defensive copy: ensure we store our own copy of the embedding so
                     // downstream calls can't be affected if the embedder reuses internal buffers.

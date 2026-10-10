@@ -75,7 +75,7 @@
     <string name="acknowledgments_text">Besonderen Dank an Google, Meta, Microsoft, IBM und die HuggingFace-Community für die Bereitstellung der unglaublichen LLM-Modelle, die diese Anwendung antreiben. Dieses Projekt stützt sich auch auf die erstaunliche Arbeit der Android-Entwicklergemeinschaft und des Open-Source-Ökosystems.</string>    <string name="sd_models_credit">Bildgenerierungsmodelle werden von xororz\'s Stable Diffusion-Implementierungen mit Qualcomm QNN (NPU) und CPU Backends betrieben.</string>    <string name="nexa_sdk_credit">GGUF-Modellinferenz wird von Nexa SDK bereitgestellt.</string>    <string name="ai_thinking">KI denkt nach...</string>
     <string name="thinking_label">Denken</string>
     <string name="thinking_tokens">Denken (%1$d Tokens)</string>
-    <string name="version_number">Version 4.4.0</string>
+    <string name="version_number">Version 4.5.0</string>
     <string name="app_version">App-Version</string>
     
     <!-- Terms of Service -->
@@ -973,4 +973,102 @@
     <string name="gguf_vulkan_setting">GGUF-GPU-Backend</string>
     <string name="crash_recovery_title">App unerwartet beendet</string>
     <string name="crash_recovery_message">Versuche, ein kleineres Modell zu laden oder die CPU zu verwenden.</string>
+    <string name="feature_photo_search">Instant Media Search</string>
+    <string name="feature_photo_search_desc">Organize and search your photos and videos locally with EmbeddingGemma 2</string>
+    <string name="feature_video_moment">Video Moment Finder</string>
+    <string name="feature_video_moment_desc">Search for moments in videos using natural language with EmbeddingGemma 2</string>
+    <string name="video_moment_onboarding_title">Search for a moment inside your videos</string>
+    <string name="video_moment_onboarding_desc">EmbeddingGemma 2 splits each video into 2 second windows, reads two frames and the audio in each window, then you can jump to the moment you describe.</string>
+    <string name="video_moment_all">Analyze all videos</string>
+    <string name="video_moment_pick">Select videos</string>
+    <string name="video_moment_hint">Describe a moment, e.g. cutting a cake</string>
+    <string name="video_moment_play">Play %1$s</string>
+    <string name="feature_audio_search">Audiosuche</string>
+    <string name="feature_audio_search_desc">Momente in deinen Audios per Beschreibung finden</string>
+    <string name="media_search_download_model">EmbeddingGemma 2 herunterladen</string>
+    <string name="media_search_download_model_desc">Diese Funktion führt EmbeddingGemma 2 auf deinem Gerät aus. Lade es aus der Modellliste herunter, um zu starten.</string>
+    <string name="media_search_loading_model">EmbeddingGemma 2 wird geladen…</string>
+    <string name="media_search_model_failed">EmbeddingGemma 2 konnte nicht geladen werden</string>
+    <string name="media_search_analyzing">Wird analysiert…</string>
+    <string name="media_search_paused">Analyse pausiert</string>
+    <string name="media_search_progress">%1$d von %2$d analysiert (%3$d %%)</string>
+    <string name="media_search_pause">Pausieren</string>
+    <string name="media_search_resume">Fortsetzen</string>
+    <string name="media_search_incomplete_warning">Analyse läuft noch, daher können Ergebnisse fehlen.</string>
+    <string name="media_search_no_results">Keine Treffer gefunden</string>
+    <string name="media_search_library">Mediathek</string>
+    <string name="media_search_clear">Alles löschen und neu beginnen</string>
+    <string name="media_search_grant_access">Zugriff erlauben</string>
+    <string name="photo_search_onboarding_title">Fotos und Videos per Beschreibung durchsuchen</string>
+    <string name="photo_search_onboarding_desc">EmbeddingGemma 2 analysiert deine Fotos und Videos auf diesem Gerät. Videos werden über das erste und letzte Bild gelesen. Danach kannst du sie mit einfachen Worten durchsuchen oder Ähnliches finden. Nichts verlässt dein Smartphone.</string>
+    <string name="photo_search_all_photos">Alle Fotos und Videos analysieren</string>
+    <string name="photo_search_select_photos">Fotos und Videos auswählen</string>
+    <string name="photo_search_hint">Beschreibe ein Foto oder Video, z. B. Hund am Strand</string>
+    <string name="photo_search_find_similar">Ähnliche Fotos finden</string>
+    <string name="photo_search_similar_results">Ähnliche Fotos</string>
+    <string name="photo_search_permission_denied">Zum Analysieren deiner Mediathek werden Foto- und Videozugriff benötigt.</string>
+    <string name="photo_search_count">%1$d von %2$d Fotos analysiert</string>
+    <string name="audio_search_onboarding_title">Audios per Beschreibung durchsuchen</string>
+    <string name="audio_search_onboarding_desc">EmbeddingGemma 2 teilt jede Aufnahme in kurze Momente und analysiert sie auf diesem Gerät, damit du direkt zur beschriebenen Stelle springen kannst.</string>
+    <string name="audio_search_scan_device">Geräte-Audio analysieren</string>
+    <string name="audio_search_import">Audiodateien importieren</string>
+    <string name="audio_search_hint">Beschreibe ein Geräusch, z. B. Leute lachen</string>
+    <string name="audio_search_permission_denied">Zum Analysieren des Geräte-Audios wird Audiozugriff benötigt.</string>
+    <string name="audio_search_count">%1$d von %2$d Dateien analysiert</string>
+    <string name="audio_search_moment">%1$s abspielen</string>
+
+    <!-- Supertonic 3 -->
+    <string name="supertonic_language">Sprache der Sprachausgabe</string>
+    <string name="supertonic_voice_download_failed">Stimme konnte nicht heruntergeladen werden. Bitte erneut versuchen.</string>
+    <string name="supertonic_model_unavailable">Supertonic 3 ist nicht verfügbar. Lade das Modell vollständig herunter oder wähle in den Einstellungen eine andere Sprachausgabe.</string>
+    <string name="supertonic_speech_failed">Sprachausgabe fehlgeschlagen. Prüfe die gewählte Stimme und wähle in den Einstellungen eine unterstützte Sprache.</string>
+
+    <!-- On-device PocketTTS.cpp voice cloning -->
+    <string name="pocket_voice_cloning">Stimme klonen · Pocket TTS</string>
+    <string name="pocket_voice_help">Nimm hier auf oder importiere Audio. Nur Englisch. Importiere einen klaren WAV-, MP3-, FLAC-, M4A/AAC- oder OGG-Clip von 3–30 Sekunden (maximal 20 MB). Das Klonen erfolgt vollständig auf diesem Gerät. Die gewählte Stimme nutzt Pocket TTS in der gesamten App außer im Übersetzer.</string>
+    <string name="pocket_model_required">Lade zuerst Pocket TTS auf dem Modelldownload-Bildschirm herunter.</string>
+    <string name="pocket_cloning">Stimme wird auf diesem Gerät geklont…</string>
+    <string name="pocket_clone_failed">Stimme konnte nicht geklont werden. Verwende einen klaren WAV-, MP3-, FLAC-, M4A/AAC- oder OGG-Sprachclip von mindestens 3 Sekunden.</string>
+    <string name="pocket_import_voice">Stimme importieren und klonen</string>
+    <string name="pocket_speech_failed">Sprache konnte nicht erzeugt werden. Wähle in den Einstellungen eine geklonte Pocket TTS-Stimme.</string>
+
+    <!-- Microphone recording for local voice cloning -->
+    <string name="pocket_record_voice">Stimme aufnehmen</string>
+    <string name="pocket_stop_and_clone">Stoppen und klonen</string>
+    <string name="pocket_recording">Aufnahme: %1$d / 30 s</string>
+    <string name="pocket_record_failed">Aufnahme oder Klonen fehlgeschlagen. Versuche es mit mindestens 3 Sekunden deutlicher Sprache erneut.</string>
+    <string name="pocket_microphone_required">Erlaube den Mikrofonzugriff, um eine Stimme aufzunehmen.</string>
+    <string name="pocket_recorded_voice">Aufnahme %1$s</string>
+
+    <!-- Supertonic custom voice file import -->
+    <string name="supertonic_import_voice">Stimmen-JSON importieren</string>
+    <string name="supertonic_import_failed">Stimme konnte nicht importiert werden. Wähle eine Supertonic 3-Stimmstil-JSON-Datei (maximal 2 MB).</string>
+
+    <!-- Vibecode local Codex agent -->
+    <string name="vibe_codex_mode">Codex-Modus</string>
+    <string name="vibe_codex_description">Verwendet dein ausgewähltes lokales Modell ohne Anmeldung. Befehle werden mit Termux-Berechtigungen ausgeführt.</string>
+    <string name="vibe_codex_install">Codex in Termux installieren</string>
+    <string name="vibe_codex_install_help">Aktiviere Befehle externer Apps in Termux und installiere Codex vor dem Start.</string>
+    <string name="vibe_codex_installing">Codex wird in Termux installiert…</string>
+    <string name="vibe_codex_installed">Codex ist installiert. Dein ausgewähltes lokales Modell ist einsatzbereit.</string>
+    <string name="vibe_codex_requirements">Erfordert Android 10 oder neuer und ein ARM64-Gerät.</string>
+    <string name="vibe_codex_connection_error">Verbindung zu Codex in Termux fehlgeschlagen.</string>
+    <string name="vibe_codex_model_error">Das lokale Modell lieferte keine gültige Werkzeugantwort. Versuche ein Programmiermodell oder einen größeren Kontext.</string>
+    <string name="vibe_codex_conflict">Das Projekt wurde außerhalb von Vibecode geändert. Die erzeugten Änderungen bleiben im Termux-Arbeitsbereich.</string>
+    <string name="vibe_codex_failed">Codex ist fehlgeschlagen. Prüfe die Termux-Einrichtung, das lokale Modell und die App-Protokolle.</string>
+    <string name="vibe_codex_folder_required">Öffne vor der Verwendung von Codex einen Arbeitsordner.</string>
+    <string name="vibe_codex_approval">Codex bittet um Genehmigung</string>
+
+    <string name="vibe_codex_terminal">Terminal</string>
+    <string name="vibe_codex_running">Wird ausgeführt</string>
+    <string name="vibe_codex_stopped">Gestoppt</string>
+    <string name="vibe_codex_starting">Codex wird gestartet…</string>
+    <string name="vibe_codex_connecting">Verbindung zu Codex wird hergestellt…</string>
+    <string name="vibe_codex_staging">Projektdateien werden vorbereitet…</string>
+    <string name="vibe_codex_generating">Lokales Modell arbeitet…</string>
+    <string name="vibe_codex_syncing">Projektänderungen werden angewendet…</string>
+    <string name="vibe_codex_step_progress">Agentenschritt %1$d · Versuch %2$d · %3$d Zeichen generiert</string>
+    <string name="vibe_codex_saved_verified">%1$s gespeichert und Inhalt überprüft.</string>
+    <string name="tts_voice_name">Name der Stimme</string>
+    <string name="tts_voice_rename_failed">Diese Stimme konnte nicht umbenannt werden. Bitte versuche es erneut.</string>
 </resources>

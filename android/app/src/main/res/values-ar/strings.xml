@@ -78,7 +78,7 @@
     <string name="ai_thinking">الذكاء الاصطناعي يفكر...</string>
     <string name="thinking_label">التفكير</string>
     <string name="thinking_tokens">التفكير (%1$d رموز)</string>
-    <string name="version_number">الإصدار 4.4.0</string>
+    <string name="version_number">الإصدار 4.5.0</string>
     <string name="app_version">إصدار التطبيق</string>
 
     <!-- Terms of Service -->
@@ -1007,4 +1007,102 @@
     <string name="gguf_vulkan_setting">واجهة GPU لنماذج GGUF</string>
     <string name="crash_recovery_title">أُغلق التطبيق بشكل غير متوقع</string>
     <string name="crash_recovery_message">جرّب تحميل نموذج أصغر أو استخدام المعالج المركزي.</string>
+    <string name="feature_photo_search">Instant Media Search</string>
+    <string name="feature_photo_search_desc">Organize and search your photos and videos locally with EmbeddingGemma 2</string>
+    <string name="feature_video_moment">Video Moment Finder</string>
+    <string name="feature_video_moment_desc">Search for moments in videos using natural language with EmbeddingGemma 2</string>
+    <string name="video_moment_onboarding_title">Search for a moment inside your videos</string>
+    <string name="video_moment_onboarding_desc">EmbeddingGemma 2 splits each video into 2 second windows, reads two frames and the audio in each window, then you can jump to the moment you describe.</string>
+    <string name="video_moment_all">Analyze all videos</string>
+    <string name="video_moment_pick">Select videos</string>
+    <string name="video_moment_hint">Describe a moment, e.g. cutting a cake</string>
+    <string name="video_moment_play">Play %1$s</string>
+    <string name="feature_audio_search">البحث في الصوت</string>
+    <string name="feature_audio_search_desc">اعثر على لحظات في ملفاتك الصوتية بوصفها</string>
+    <string name="media_search_download_model">تنزيل EmbeddingGemma 2</string>
+    <string name="media_search_download_model_desc">تعمل هذه الميزة بنموذج EmbeddingGemma 2 على جهازك. نزّله من قائمة النماذج للبدء.</string>
+    <string name="media_search_loading_model">جارٍ تحميل EmbeddingGemma 2…</string>
+    <string name="media_search_model_failed">تعذّر تحميل EmbeddingGemma 2</string>
+    <string name="media_search_analyzing">جارٍ التحليل…</string>
+    <string name="media_search_paused">التحليل متوقف مؤقتًا</string>
+    <string name="media_search_progress">تم تحليل %1$d من %2$d (%3$d%%)</string>
+    <string name="media_search_pause">إيقاف مؤقت</string>
+    <string name="media_search_resume">استئناف</string>
+    <string name="media_search_incomplete_warning">لا يزال التحليل جاريًا، لذا قد تنقص بعض النتائج.</string>
+    <string name="media_search_no_results">لا توجد نتائج مطابقة</string>
+    <string name="media_search_library">المكتبة</string>
+    <string name="media_search_clear">مسح الكل والبدء من جديد</string>
+    <string name="media_search_grant_access">السماح بالوصول</string>
+    <string name="photo_search_onboarding_title">ابحث في صورك وفيديوهاتك بوصفها</string>
+    <string name="photo_search_onboarding_desc">يحلّل EmbeddingGemma 2 صورك وفيديوهاتك على هذا الجهاز. تُقرأ الفيديوهات من الإطار الأول والأخير. بعدها يمكنك البحث بكلمات عادية أو العثور على عناصر مشابهة. لا شيء يغادر هاتفك.</string>
+    <string name="photo_search_all_photos">تحليل كل الصور والفيديوهات</string>
+    <string name="photo_search_select_photos">اختيار صور وفيديوهات</string>
+    <string name="photo_search_hint">صف صورة أو فيديو، مثل كلب على الشاطئ</string>
+    <string name="photo_search_find_similar">العثور على صور مشابهة</string>
+    <string name="photo_search_similar_results">صور مشابهة</string>
+    <string name="photo_search_permission_denied">يلزم الوصول إلى الصور والفيديو لتحليل مكتبتك.</string>
+    <string name="photo_search_count">تم تحليل %1$d من %2$d صورة</string>
+    <string name="audio_search_onboarding_title">ابحث في ملفاتك الصوتية بوصفها</string>
+    <string name="audio_search_onboarding_desc">يقسّم EmbeddingGemma 2 كل تسجيل إلى لحظات قصيرة ويحلّلها على هذا الجهاز، لتنتقل مباشرة إلى الجزء الذي تصفه.</string>
+    <string name="audio_search_scan_device">تحليل الصوت على الجهاز</string>
+    <string name="audio_search_import">استيراد ملفات صوتية</string>
+    <string name="audio_search_hint">صِف صوتًا، مثل: أشخاص يضحكون</string>
+    <string name="audio_search_permission_denied">يلزم الوصول إلى الصوت لتحليل الصوت على الجهاز.</string>
+    <string name="audio_search_count">تم تحليل %1$d من %2$d ملف</string>
+    <string name="audio_search_moment">تشغيل %1$s</string>
+
+    <!-- Supertonic 3 -->
+    <string name="supertonic_language">لغة النطق</string>
+    <string name="supertonic_voice_download_failed">تعذر تنزيل الصوت. حاول مرة أخرى.</string>
+    <string name="supertonic_model_unavailable">Supertonic 3 غير متاح. أكمل تنزيل النموذج أو اختر محرك نطق آخر في الإعدادات.</string>
+    <string name="supertonic_speech_failed">فشل النطق. تحقق من الصوت المحدد واختر لغة مدعومة في الإعدادات.</string>
+
+    <!-- On-device PocketTTS.cpp voice cloning -->
+    <string name="pocket_voice_cloning">استنساخ الصوت · Pocket TTS</string>
+    <string name="pocket_voice_help">سجّل هنا أو استورد الصوت. للإنجليزية فقط. استورد مقطع WAV أو MP3 أو FLAC أو M4A/AAC أو OGG واضحًا مدته 3–30 ثانية (حتى 20 ميغابايت). يتم الاستنساخ بالكامل على هذا الجهاز. يستخدم اختيار صوت Pocket TTS في التطبيق باستثناء المترجم.</string>
+    <string name="pocket_model_required">نزّل Pocket TTS من شاشة تنزيل النماذج أولًا.</string>
+    <string name="pocket_cloning">جارٍ استنساخ الصوت على هذا الجهاز…</string>
+    <string name="pocket_clone_failed">تعذّر استنساخ الصوت. استخدم مقطع كلام واضحًا بصيغة WAV أو MP3 أو FLAC أو M4A/AAC أو OGG مدته 3 ثوانٍ على الأقل.</string>
+    <string name="pocket_import_voice">استيراد الصوت واستنساخه</string>
+    <string name="pocket_speech_failed">تعذّر إنشاء الكلام. اختر صوت Pocket TTS مستنسخًا في الإعدادات.</string>
+
+    <!-- Microphone recording for local voice cloning -->
+    <string name="pocket_record_voice">تسجيل الصوت</string>
+    <string name="pocket_stop_and_clone">إيقاف واستنساخ</string>
+    <string name="pocket_recording">التسجيل: %1$d / 30 ثانية</string>
+    <string name="pocket_record_failed">فشل التسجيل أو الاستنساخ. حاول مجددًا بكلام واضح لمدة 3 ثوانٍ على الأقل.</string>
+    <string name="pocket_microphone_required">اسمح بالوصول إلى الميكروفون لتسجيل صوت.</string>
+    <string name="pocket_recorded_voice">تسجيل %1$s</string>
+
+    <!-- Supertonic custom voice file import -->
+    <string name="supertonic_import_voice">استيراد ملف صوت JSON</string>
+    <string name="supertonic_import_failed">تعذّر استيراد الصوت. اختر ملف نمط صوت Supertonic 3 بصيغة JSON (بحد أقصى 2 ميغابايت).</string>
+
+    <!-- Vibecode local Codex agent -->
+    <string name="vibe_codex_mode">وضع Codex</string>
+    <string name="vibe_codex_description">يستخدم نموذجك المحلي المحدد دون تسجيل الدخول. تُنفذ الأوامر بأذونات Termux.</string>
+    <string name="vibe_codex_install">تثبيت Codex في Termux</string>
+    <string name="vibe_codex_install_help">فعّل أوامر التطبيقات الخارجية في Termux، ثم ثبّت Codex قبل البدء.</string>
+    <string name="vibe_codex_installing">جارٍ تثبيت Codex في Termux…</string>
+    <string name="vibe_codex_installed">تم تثبيت Codex. نموذجك المحلي المحدد جاهز للاستخدام.</string>
+    <string name="vibe_codex_requirements">يتطلب Android 10 أو أحدث وجهاز ARM64.</string>
+    <string name="vibe_codex_connection_error">تعذر الاتصال بـ Codex في Termux.</string>
+    <string name="vibe_codex_model_error">لم يُرجع النموذج المحلي استجابة صالحة للأداة. جرّب نموذج برمجة أو سياقًا أكبر.</string>
+    <string name="vibe_codex_conflict">تغير المشروع خارج Vibecode. تبقى التعديلات المُنشأة في مساحة عمل Termux.</string>
+    <string name="vibe_codex_failed">فشل Codex. تحقق من إعداد Termux والنموذج المحلي وسجلات التطبيق.</string>
+    <string name="vibe_codex_folder_required">افتح مجلد مساحة عمل قبل استخدام Codex.</string>
+    <string name="vibe_codex_approval">يطلب Codex الموافقة</string>
+
+    <string name="vibe_codex_terminal">الطرفية</string>
+    <string name="vibe_codex_running">قيد التشغيل</string>
+    <string name="vibe_codex_stopped">متوقف</string>
+    <string name="vibe_codex_starting">جارٍ بدء Codex…</string>
+    <string name="vibe_codex_connecting">جارٍ الاتصال بـ Codex…</string>
+    <string name="vibe_codex_staging">جارٍ تجهيز ملفات المشروع…</string>
+    <string name="vibe_codex_generating">النموذج المحلي يعمل…</string>
+    <string name="vibe_codex_syncing">جارٍ تطبيق تغييرات المشروع…</string>
+    <string name="vibe_codex_step_progress">خطوة الوكيل %1$d · المحاولة %2$d · تم توليد %3$d حرفًا</string>
+    <string name="vibe_codex_saved_verified">تم حفظ %1$s والتحقق من محتواه.</string>
+    <string name="tts_voice_name">اسم الصوت</string>
+    <string name="tts_voice_rename_failed">تعذّر تغيير اسم هذا الصوت. يُرجى المحاولة مرة أخرى.</string>
 </resources>

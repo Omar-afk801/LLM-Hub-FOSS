@@ -78,7 +78,7 @@
     <string name="ai_thinking">AI가 생각 중입니다...</string>
     <string name="thinking_label">생각</string>
     <string name="thinking_tokens">생각 (%1$d 토큰)</string>
-    <string name="version_number">버전 4.4.0</string>
+    <string name="version_number">버전 4.5.0</string>
     <string name="app_version">앱 버전</string>
     
     <!-- Terms of Service -->
@@ -1007,4 +1007,102 @@
     <string name="gguf_vulkan_setting">GGUF GPU 백엔드</string>
     <string name="crash_recovery_title">앱이 예기치 않게 종료되었습니다</string>
     <string name="crash_recovery_message">더 작은 모델을 로드하거나 CPU를 사용해 보세요.</string>
+    <string name="feature_photo_search">Instant Media Search</string>
+    <string name="feature_photo_search_desc">Organize and search your photos and videos locally with EmbeddingGemma 2</string>
+    <string name="feature_video_moment">Video Moment Finder</string>
+    <string name="feature_video_moment_desc">Search for moments in videos using natural language with EmbeddingGemma 2</string>
+    <string name="video_moment_onboarding_title">Search for a moment inside your videos</string>
+    <string name="video_moment_onboarding_desc">EmbeddingGemma 2 splits each video into 2 second windows, reads two frames and the audio in each window, then you can jump to the moment you describe.</string>
+    <string name="video_moment_all">Analyze all videos</string>
+    <string name="video_moment_pick">Select videos</string>
+    <string name="video_moment_hint">Describe a moment, e.g. cutting a cake</string>
+    <string name="video_moment_play">Play %1$s</string>
+    <string name="feature_audio_search">오디오 검색</string>
+    <string name="feature_audio_search_desc">설명만으로 오디오 속 순간을 찾아보세요</string>
+    <string name="media_search_download_model">EmbeddingGemma 2 다운로드</string>
+    <string name="media_search_download_model_desc">이 기능은 기기에서 EmbeddingGemma 2를 실행합니다. 시작하려면 모델 목록에서 다운로드하세요.</string>
+    <string name="media_search_loading_model">EmbeddingGemma 2 불러오는 중…</string>
+    <string name="media_search_model_failed">EmbeddingGemma 2를 불러오지 못했습니다</string>
+    <string name="media_search_analyzing">분석 중…</string>
+    <string name="media_search_paused">분석 일시중지됨</string>
+    <string name="media_search_progress">%2$d개 중 %1$d개 분석됨(%3$d%%)</string>
+    <string name="media_search_pause">일시중지</string>
+    <string name="media_search_resume">재개</string>
+    <string name="media_search_incomplete_warning">아직 분석 중이라 일부 결과가 빠질 수 있습니다.</string>
+    <string name="media_search_no_results">일치하는 항목이 없습니다</string>
+    <string name="media_search_library">보관함</string>
+    <string name="media_search_clear">모두 지우고 다시 시작</string>
+    <string name="media_search_grant_access">접근 허용</string>
+    <string name="photo_search_onboarding_title">설명으로 사진과 동영상을 검색하세요</string>
+    <string name="photo_search_onboarding_desc">EmbeddingGemma 2가 이 기기에서 사진과 동영상을 분석합니다. 동영상은 첫 프레임과 마지막 프레임으로 읽습니다. 그다음 평범한 말로 검색하거나 비슷한 항목을 찾을 수 있습니다. 휴대폰 밖으로 나가는 것은 없습니다.</string>
+    <string name="photo_search_all_photos">모든 사진과 동영상 분석</string>
+    <string name="photo_search_select_photos">사진과 동영상 선택</string>
+    <string name="photo_search_hint">사진이나 동영상을 설명하세요. 예: 해변의 개</string>
+    <string name="photo_search_find_similar">비슷한 사진 찾기</string>
+    <string name="photo_search_similar_results">비슷한 사진</string>
+    <string name="photo_search_permission_denied">보관함을 분석하려면 사진 및 동영상 접근이 필요합니다.</string>
+    <string name="photo_search_count">사진 %2$d장 중 %1$d장 분석됨</string>
+    <string name="audio_search_onboarding_title">오디오를 설명해서 검색하세요</string>
+    <string name="audio_search_onboarding_desc">EmbeddingGemma 2가 각 녹음을 짧은 순간으로 나눠 이 기기에서 분석하므로, 설명한 부분으로 바로 이동할 수 있습니다.</string>
+    <string name="audio_search_scan_device">기기 오디오 분석</string>
+    <string name="audio_search_import">오디오 파일 가져오기</string>
+    <string name="audio_search_hint">소리를 설명하세요. 예: 사람들이 웃는 소리</string>
+    <string name="audio_search_permission_denied">기기 오디오를 분석하려면 오디오 접근 권한이 필요합니다.</string>
+    <string name="audio_search_count">파일 %2$d개 중 %1$d개 분석됨</string>
+    <string name="audio_search_moment">%1$s 재생</string>
+
+    <!-- Supertonic 3 -->
+    <string name="supertonic_language">음성 언어</string>
+    <string name="supertonic_voice_download_failed">음성 다운로드에 실패했습니다. 다시 시도하세요.</string>
+    <string name="supertonic_model_unavailable">Supertonic 3를 사용할 수 없습니다. 모델 다운로드를 완료하거나 설정에서 다른 음성 엔진을 선택하세요.</string>
+    <string name="supertonic_speech_failed">음성 생성에 실패했습니다. 선택한 음성을 확인하고 설정에서 지원되는 언어를 선택하세요.</string>
+
+    <!-- On-device PocketTTS.cpp voice cloning -->
+    <string name="pocket_voice_cloning">음성 복제 · Pocket TTS</string>
+    <string name="pocket_voice_help">여기에서 녹음하거나 오디오를 가져오세요. 영어만 지원합니다. 3~30초의 선명한 WAV, MP3, FLAC, M4A/AAC 또는 OGG 클립(최대 20 MB)을 가져오세요. 복제는 모두 기기에서 수행됩니다. 음성을 선택하면 번역기를 제외한 앱 전체에서 Pocket TTS를 사용합니다.</string>
+    <string name="pocket_model_required">먼저 모델 다운로드 화면에서 Pocket TTS를 다운로드하세요.</string>
+    <string name="pocket_cloning">기기에서 음성을 복제하는 중…</string>
+    <string name="pocket_clone_failed">음성을 복제할 수 없습니다. 최소 3초의 선명한 WAV, MP3, FLAC, M4A/AAC 또는 OGG 음성 클립을 사용하세요.</string>
+    <string name="pocket_import_voice">음성 가져오기 및 복제</string>
+    <string name="pocket_speech_failed">음성을 생성할 수 없습니다. 설정에서 복제된 Pocket TTS 음성을 선택하세요.</string>
+
+    <!-- Microphone recording for local voice cloning -->
+    <string name="pocket_record_voice">음성 녹음</string>
+    <string name="pocket_stop_and_clone">중지 및 복제</string>
+    <string name="pocket_recording">녹음 중: %1$d / 30초</string>
+    <string name="pocket_record_failed">녹음 또는 복제에 실패했습니다. 최소 3초의 선명한 음성으로 다시 시도하세요.</string>
+    <string name="pocket_microphone_required">음성을 녹음하려면 마이크 접근을 허용하세요.</string>
+    <string name="pocket_recorded_voice">녹음 %1$s</string>
+
+    <!-- Supertonic custom voice file import -->
+    <string name="supertonic_import_voice">음성 JSON 가져오기</string>
+    <string name="supertonic_import_failed">음성을 가져올 수 없습니다. Supertonic 3 음성 스타일 JSON 파일(최대 2 MB)을 선택하세요.</string>
+
+    <!-- Vibecode local Codex agent -->
+    <string name="vibe_codex_mode">Codex 모드</string>
+    <string name="vibe_codex_description">로그인 없이 선택한 로컬 모델을 사용합니다. 명령은 Termux 권한으로 실행됩니다.</string>
+    <string name="vibe_codex_install">Termux에 Codex 설치</string>
+    <string name="vibe_codex_install_help">Termux에서 외부 앱 명령을 활성화한 다음 시작하기 전에 Codex를 설치하세요.</string>
+    <string name="vibe_codex_installing">Termux에 Codex 설치 중…</string>
+    <string name="vibe_codex_installed">Codex가 설치되었습니다. 선택한 로컬 모델을 사용할 수 있습니다.</string>
+    <string name="vibe_codex_requirements">Android 10 이상 및 ARM64 기기가 필요합니다.</string>
+    <string name="vibe_codex_connection_error">Termux의 Codex에 연결할 수 없습니다.</string>
+    <string name="vibe_codex_model_error">로컬 모델이 유효한 도구 응답을 반환하지 않았습니다. 코딩 모델이나 더 큰 컨텍스트를 사용해 보세요.</string>
+    <string name="vibe_codex_conflict">Vibecode 외부에서 프로젝트가 변경되었습니다. 생성된 수정 사항은 Termux 작업 공간에 남아 있습니다.</string>
+    <string name="vibe_codex_failed">Codex가 실패했습니다. Termux 설정, 로컬 모델 및 앱 로그를 확인하세요.</string>
+    <string name="vibe_codex_folder_required">Codex를 사용하기 전에 작업 공간 폴더를 여세요.</string>
+    <string name="vibe_codex_approval">Codex가 승인을 요청합니다</string>
+
+    <string name="vibe_codex_terminal">터미널</string>
+    <string name="vibe_codex_running">실행 중</string>
+    <string name="vibe_codex_stopped">중지됨</string>
+    <string name="vibe_codex_starting">Codex 시작 중…</string>
+    <string name="vibe_codex_connecting">Codex에 연결 중…</string>
+    <string name="vibe_codex_staging">프로젝트 파일 준비 중…</string>
+    <string name="vibe_codex_generating">로컬 모델이 작업 중입니다…</string>
+    <string name="vibe_codex_syncing">프로젝트 변경 사항 적용 중…</string>
+    <string name="vibe_codex_step_progress">에이전트 단계 %1$d · 시도 %2$d · %3$d자 생성됨</string>
+    <string name="vibe_codex_saved_verified">%1$s 파일을 저장하고 내용을 확인했습니다.</string>
+    <string name="tts_voice_name">음성 이름</string>
+    <string name="tts_voice_rename_failed">이 음성의 이름을 변경할 수 없습니다. 다시 시도하세요.</string>
 </resources>

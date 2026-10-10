@@ -75,7 +75,7 @@
     <string name="acknowledgments_text">このアプリケーションを支える素晴らしいLLMモデルを提供してくれたGoogle、Meta、Microsoft、IBM、およびHuggingFaceコミュニティに特別な感謝を。このプロジェクトは、Android開発コミュニティとオープンソースエコシステムの素晴らしい仕事にも依存しています。</string>    <string name="sd_models_credit">画像生成モデルは、Qualcomm QNN（NPU）とCPUバックエンドを使用したxororzのStable Diffusion実装により提供されています。</string>    <string name="nexa_sdk_credit">GGUFモデルの推論はNexa SDKによって提供されています。</string>    <string name="ai_thinking">AIが考え中...</string>
     <string name="thinking_label">思考</string>
     <string name="thinking_tokens">思考（%1$d トークン）</string>
-    <string name="version_number">バージョン 4.4.0</string>
+    <string name="version_number">バージョン 4.5.0</string>
     <string name="app_version">アプリバージョン</string>
     
     <!-- Terms of Service -->
@@ -1004,4 +1004,102 @@
     <string name="gguf_vulkan_setting">GGUF GPUバックエンド</string>
     <string name="crash_recovery_title">アプリが予期せず終了しました</string>
     <string name="crash_recovery_message">より小さいモデルを読み込むか、CPUを使用してください。</string>
+    <string name="feature_photo_search">Instant Media Search</string>
+    <string name="feature_photo_search_desc">Organize and search your photos and videos locally with EmbeddingGemma 2</string>
+    <string name="feature_video_moment">Video Moment Finder</string>
+    <string name="feature_video_moment_desc">Search for moments in videos using natural language with EmbeddingGemma 2</string>
+    <string name="video_moment_onboarding_title">Search for a moment inside your videos</string>
+    <string name="video_moment_onboarding_desc">EmbeddingGemma 2 splits each video into 2 second windows, reads two frames and the audio in each window, then you can jump to the moment you describe.</string>
+    <string name="video_moment_all">Analyze all videos</string>
+    <string name="video_moment_pick">Select videos</string>
+    <string name="video_moment_hint">Describe a moment, e.g. cutting a cake</string>
+    <string name="video_moment_play">Play %1$s</string>
+    <string name="feature_audio_search">オーディオ検索</string>
+    <string name="feature_audio_search_desc">説明するだけで音声内の場面を見つけます</string>
+    <string name="media_search_download_model">EmbeddingGemma 2 をダウンロード</string>
+    <string name="media_search_download_model_desc">この機能はデバイス上で EmbeddingGemma 2 を実行します。モデル一覧からダウンロードして始めましょう。</string>
+    <string name="media_search_loading_model">EmbeddingGemma 2 を読み込んでいます…</string>
+    <string name="media_search_model_failed">EmbeddingGemma 2 を読み込めませんでした</string>
+    <string name="media_search_analyzing">分析中…</string>
+    <string name="media_search_paused">分析を一時停止中</string>
+    <string name="media_search_progress">%2$d 件中 %1$d 件を分析済み（%3$d%%）</string>
+    <string name="media_search_pause">一時停止</string>
+    <string name="media_search_resume">再開</string>
+    <string name="media_search_incomplete_warning">分析中のため、一部の結果が表示されない場合があります。</string>
+    <string name="media_search_no_results">一致するものが見つかりません</string>
+    <string name="media_search_library">ライブラリ</string>
+    <string name="media_search_clear">すべて消去してやり直す</string>
+    <string name="media_search_grant_access">アクセスを許可</string>
+    <string name="photo_search_onboarding_title">説明して写真と動画を検索</string>
+    <string name="photo_search_onboarding_desc">EmbeddingGemma 2 がこの端末上で写真と動画を分析します。動画は最初と最後のフレームから読み取ります。その後、ふつうの言葉で検索したり、似た項目を見つけたりできます。端末の外には何も出ません。</string>
+    <string name="photo_search_all_photos">すべての写真と動画を分析</string>
+    <string name="photo_search_select_photos">写真と動画を選ぶ</string>
+    <string name="photo_search_hint">写真や動画を説明（例: ビーチの犬）</string>
+    <string name="photo_search_find_similar">似た写真を探す</string>
+    <string name="photo_search_similar_results">似た写真</string>
+    <string name="photo_search_permission_denied">ライブラリを分析するには写真と動画へのアクセスが必要です。</string>
+    <string name="photo_search_count">%2$d 枚中 %1$d 枚を分析済み</string>
+    <string name="audio_search_onboarding_title">音声を説明して検索</string>
+    <string name="audio_search_onboarding_desc">EmbeddingGemma 2 が録音を短い場面に分けてこのデバイス上で分析するので、説明した部分へすぐ移動できます。</string>
+    <string name="audio_search_scan_device">デバイスの音声を分析</string>
+    <string name="audio_search_import">音声ファイルを読み込む</string>
+    <string name="audio_search_hint">音を説明してください（例：人の笑い声）</string>
+    <string name="audio_search_permission_denied">デバイスの音声を分析するには音声へのアクセスが必要です。</string>
+    <string name="audio_search_count">%2$d 件中 %1$d 件のファイルを分析済み</string>
+    <string name="audio_search_moment">%1$s を再生</string>
+
+    <!-- Supertonic 3 -->
+    <string name="supertonic_language">読み上げ言語</string>
+    <string name="supertonic_voice_download_failed">音声をダウンロードできませんでした。再試行してください。</string>
+    <string name="supertonic_model_unavailable">Supertonic 3を利用できません。モデルのダウンロードを完了するか、設定で別の読み上げエンジンを選択してください。</string>
+    <string name="supertonic_speech_failed">読み上げに失敗しました。選択した音声を確認し、設定で対応する言語を選択してください。</string>
+
+    <!-- On-device PocketTTS.cpp voice cloning -->
+    <string name="pocket_voice_cloning">音声クローン · Pocket TTS</string>
+    <string name="pocket_voice_help">ここで録音するか、音声を読み込んでください。英語のみ対応。明瞭な3〜30秒のWAV・MP3・FLAC・M4A/AAC・OGG音声（最大20 MB）を読み込んでください。クローン作成はすべて端末内で行われます。音声を選ぶと翻訳機能以外のアプリ全体でPocket TTSが使われます。</string>
+    <string name="pocket_model_required">先にモデルダウンロード画面からPocket TTSをダウンロードしてください。</string>
+    <string name="pocket_cloning">端末内で音声クローンを作成中…</string>
+    <string name="pocket_clone_failed">音声クローンを作成できませんでした。3秒以上の明瞭なWAV・MP3・FLAC・M4A/AAC・OGGの音声を使用してください。</string>
+    <string name="pocket_import_voice">音声を読み込んでクローン作成</string>
+    <string name="pocket_speech_failed">音声を生成できませんでした。設定でPocket TTSのクローン音声を選択してください。</string>
+
+    <!-- Microphone recording for local voice cloning -->
+    <string name="pocket_record_voice">音声を録音</string>
+    <string name="pocket_stop_and_clone">停止してクローン作成</string>
+    <string name="pocket_recording">録音中：%1$d / 30秒</string>
+    <string name="pocket_record_failed">録音またはクローン作成に失敗しました。3秒以上の明瞭な音声でもう一度お試しください。</string>
+    <string name="pocket_microphone_required">録音するにはマイクへのアクセスを許可してください。</string>
+    <string name="pocket_recorded_voice">録音 %1$s</string>
+
+    <!-- Supertonic custom voice file import -->
+    <string name="supertonic_import_voice">音声JSONを読み込む</string>
+    <string name="supertonic_import_failed">音声を読み込めませんでした。Supertonic 3の音声スタイルJSONファイル（最大2 MB）を選択してください。</string>
+
+    <!-- Vibecode local Codex agent -->
+    <string name="vibe_codex_mode">Codexモード</string>
+    <string name="vibe_codex_description">ログインせずに選択したローカルモデルを使用します。コマンドはTermuxの権限で実行されます。</string>
+    <string name="vibe_codex_install">TermuxにCodexをインストール</string>
+    <string name="vibe_codex_install_help">Termuxで外部アプリのコマンドを有効にし、開始前にCodexをインストールしてください。</string>
+    <string name="vibe_codex_installing">TermuxにCodexをインストール中…</string>
+    <string name="vibe_codex_installed">Codexをインストールしました。選択したローカルモデルを使用できます。</string>
+    <string name="vibe_codex_requirements">Android 10以降とARM64デバイスが必要です。</string>
+    <string name="vibe_codex_connection_error">TermuxのCodexに接続できませんでした。</string>
+    <string name="vibe_codex_model_error">ローカルモデルが有効なツール応答を返しませんでした。コーディングモデルか、より大きなコンテキストをお試しください。</string>
+    <string name="vibe_codex_conflict">Vibecodeの外でプロジェクトが変更されました。生成した編集はTermuxの作業フォルダに残っています。</string>
+    <string name="vibe_codex_failed">Codexに失敗しました。Termuxの設定、ローカルモデル、アプリのログを確認してください。</string>
+    <string name="vibe_codex_folder_required">Codexを使う前に作業フォルダを開いてください。</string>
+    <string name="vibe_codex_approval">Codexが承認を求めています</string>
+
+    <string name="vibe_codex_terminal">ターミナル</string>
+    <string name="vibe_codex_running">実行中</string>
+    <string name="vibe_codex_stopped">停止</string>
+    <string name="vibe_codex_starting">Codexを起動中…</string>
+    <string name="vibe_codex_connecting">Codexに接続中…</string>
+    <string name="vibe_codex_staging">プロジェクトファイルを準備中…</string>
+    <string name="vibe_codex_generating">ローカルモデルが処理中…</string>
+    <string name="vibe_codex_syncing">プロジェクトの変更を適用中…</string>
+    <string name="vibe_codex_step_progress">エージェントのステップ %1$d · 試行 %2$d · %3$d 文字生成済み</string>
+    <string name="vibe_codex_saved_verified">%1$s を保存し、内容を確認しました。</string>
+    <string name="tts_voice_name">音声の名前</string>
+    <string name="tts_voice_rename_failed">この音声の名前を変更できませんでした。もう一度お試しください。</string>
 </resources>

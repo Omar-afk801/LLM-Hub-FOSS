@@ -76,7 +76,7 @@ internal object LlamaCppNative : LlamaCppRuntime {
     external override fun nativeDecodeSpeed(): Double
 }
 
-/** Official b11218 Snapdragon OpenCL/Hexagon runtime, loaded only for GPU/NPU selection. */
+/** Official b11491 Snapdragon OpenCL/Hexagon runtime, loaded only for GPU/NPU selection. */
 internal object LlamaCppSnapdragonNative : LlamaCppRuntime {
     init { System.loadLibrary("llmhub_llama_snapdragon") }
 
@@ -153,7 +153,7 @@ class LlamaCppInferenceService(private val context: Context) : InferenceService 
     private var overrideEnableThinking: Boolean? = null
 
     private fun prepareHtpLibraries(): String {
-        val directory = File(context.filesDir, "llama_htp_b11218")
+        val directory = File(context.filesDir, "llama_htp_b11491")
         check(directory.isDirectory || directory.mkdirs()) { "Cannot create Hexagon library directory" }
         for (architecture in listOf("v73", "v75", "v79", "v81")) {
             val name = "libggml-htp-$architecture.so"
@@ -209,11 +209,10 @@ class LlamaCppInferenceService(private val context: Context) : InferenceService 
                 return@withContext false
             }
 
-            // The sheet shows 4096 for legacy configs with contextWindow=0. Honor
-            // the user's chosen value instead of silently truncating it to 8192.
             val modelContextLimit = model.effectiveContextWindow(context)
             contextSize = (overrideContextWindow?.takeIf { it > 0 }
-                ?: minOf(4096, modelContextLimit))
+                ?: overrideMaxTokens?.takeIf { it > 0 }
+                ?: modelContextLimit)
                 .coerceIn(512, modelContextLimit.coerceAtLeast(512))
             val threads = (Runtime.getRuntime().availableProcessors() - 2).coerceIn(2, 8)
             val modelDir = modelFile.parentFile ?: File(context.filesDir, "models")
@@ -529,6 +528,7 @@ class LlamaCppInferenceService(private val context: Context) : InferenceService 
     override fun isNpuBackendEnabled(): Boolean =
         loadedBackend == LlmInference.Backend.GPU && !loadedDeviceId.isNullOrBlank()
     override fun getLastDecodeSpeedTokPerSec(): Double? = lastDecodeSpeed
+    override fun getLoadedContextSize(): Int = contextSize
     override fun getEffectiveMaxTokens(model: LLMModel): Int =
         overrideMaxTokens ?: DEFAULT_MAX_TOKENS
 

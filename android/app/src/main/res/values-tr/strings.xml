@@ -78,7 +78,7 @@
     <string name="ai_thinking">Yapay zeka düşünüyor...</string>
     <string name="thinking_label">Düşünme</string>
     <string name="thinking_tokens">Düşünme (%1$d token)</string>
-    <string name="version_number">Sürüm 4.4.0</string>
+    <string name="version_number">Sürüm 4.5.0</string>
     <string name="app_version">Uygulama Sürümü</string>
     
     <!-- Terms of Service -->
@@ -1005,4 +1005,102 @@
     <string name="gguf_vulkan_setting">GGUF GPU altyapısı</string>
     <string name="crash_recovery_title">Uygulama beklenmedik şekilde kapandı</string>
     <string name="crash_recovery_message">Daha küçük bir model yüklemeyi veya CPU kullanmayı deneyin.</string>
+    <string name="feature_photo_search">Instant Media Search</string>
+    <string name="feature_photo_search_desc">Organize and search your photos and videos locally with EmbeddingGemma 2</string>
+    <string name="feature_video_moment">Video Moment Finder</string>
+    <string name="feature_video_moment_desc">Search for moments in videos using natural language with EmbeddingGemma 2</string>
+    <string name="video_moment_onboarding_title">Search for a moment inside your videos</string>
+    <string name="video_moment_onboarding_desc">EmbeddingGemma 2 splits each video into 2 second windows, reads two frames and the audio in each window, then you can jump to the moment you describe.</string>
+    <string name="video_moment_all">Analyze all videos</string>
+    <string name="video_moment_pick">Select videos</string>
+    <string name="video_moment_hint">Describe a moment, e.g. cutting a cake</string>
+    <string name="video_moment_play">Play %1$s</string>
+    <string name="feature_audio_search">Ses Arama</string>
+    <string name="feature_audio_search_desc">Seslerinizdeki anları tarif ederek bulun</string>
+    <string name="media_search_download_model">EmbeddingGemma 2\'yi indir</string>
+    <string name="media_search_download_model_desc">Bu özellik EmbeddingGemma 2\'yi cihazınızda çalıştırır. Başlamak için model listesinden indirin.</string>
+    <string name="media_search_loading_model">EmbeddingGemma 2 yükleniyor…</string>
+    <string name="media_search_model_failed">EmbeddingGemma 2 yüklenemedi</string>
+    <string name="media_search_analyzing">Analiz ediliyor…</string>
+    <string name="media_search_paused">Analiz duraklatıldı</string>
+    <string name="media_search_progress">%2$d öğeden %1$d tanesi analiz edildi (%%%3$d)</string>
+    <string name="media_search_pause">Duraklat</string>
+    <string name="media_search_resume">Devam et</string>
+    <string name="media_search_incomplete_warning">Analiz sürüyor, bu yüzden bazı sonuçlar eksik olabilir.</string>
+    <string name="media_search_no_results">Eşleşme bulunamadı</string>
+    <string name="media_search_library">Kitaplık</string>
+    <string name="media_search_clear">Tümünü temizle ve baştan başla</string>
+    <string name="media_search_grant_access">Erişime izin ver</string>
+    <string name="photo_search_onboarding_title">Fotoğraf ve videolarınızı tarif ederek arayın</string>
+    <string name="photo_search_onboarding_desc">EmbeddingGemma 2 fotoğraf ve videolarınızı bu cihazda analiz eder. Videolar ilk ve son kareden okunur. Ardından sade sözcüklerle arayabilir veya benzer öğeler bulabilirsiniz. Hiçbir şey telefonunuzdan çıkmaz.</string>
+    <string name="photo_search_all_photos">Tüm fotoğraf ve videoları analiz et</string>
+    <string name="photo_search_select_photos">Fotoğraf ve video seç</string>
+    <string name="photo_search_hint">Bir fotoğraf veya video tarif edin, örn. sahilde köpek</string>
+    <string name="photo_search_find_similar">Benzer fotoğrafları bul</string>
+    <string name="photo_search_similar_results">Benzer fotoğraflar</string>
+    <string name="photo_search_permission_denied">Kitaplığınızı analiz etmek için fotoğraf ve video erişimi gerekir.</string>
+    <string name="photo_search_count">%2$d fotoğraftan %1$d tanesi analiz edildi</string>
+    <string name="audio_search_onboarding_title">Seslerinizi tarif ederek arayın</string>
+    <string name="audio_search_onboarding_desc">EmbeddingGemma 2 her kaydı kısa anlara böler ve bunları bu cihazda analiz eder; böylece tarif ettiğiniz bölüme doğrudan gidebilirsiniz.</string>
+    <string name="audio_search_scan_device">Cihazdaki sesleri analiz et</string>
+    <string name="audio_search_import">Ses dosyalarını içe aktar</string>
+    <string name="audio_search_hint">Bir sesi tarif edin, ör. gülen insanlar</string>
+    <string name="audio_search_permission_denied">Cihazdaki sesleri analiz etmek için ses erişimi gerekiyor.</string>
+    <string name="audio_search_count">%2$d dosyadan %1$d tanesi analiz edildi</string>
+    <string name="audio_search_moment">%1$s oynat</string>
+
+    <!-- Supertonic 3 -->
+    <string name="supertonic_language">Konuşma dili</string>
+    <string name="supertonic_voice_download_failed">Ses indirilemedi. Lütfen tekrar deneyin.</string>
+    <string name="supertonic_model_unavailable">Supertonic 3 kullanılamıyor. Model indirmesini tamamlayın veya Ayarlar’dan başka bir konuşma motoru seçin.</string>
+    <string name="supertonic_speech_failed">Konuşma oluşturulamadı. Seçili sesi kontrol edin ve Ayarlar’dan desteklenen bir dil seçin.</string>
+
+    <!-- On-device PocketTTS.cpp voice cloning -->
+    <string name="pocket_voice_cloning">Ses klonlama · Pocket TTS</string>
+    <string name="pocket_voice_help">Burada kaydedin veya ses içe aktarın. Yalnızca İngilizce. 3–30 saniyelik net bir WAV, MP3, FLAC, M4A/AAC veya OGG klibi içe aktarın (en fazla 20 MB). Klonlama tamamen bu cihazda yapılır. Ses seçildiğinde Çevirmen dışında tüm uygulamada Pocket TTS kullanılır.</string>
+    <string name="pocket_model_required">Önce model indirme ekranından Pocket TTS indirin.</string>
+    <string name="pocket_cloning">Ses bu cihazda klonlanıyor…</string>
+    <string name="pocket_clone_failed">Ses klonlanamadı. En az 3 saniyelik net bir WAV, MP3, FLAC, M4A/AAC veya OGG konuşma klibi kullanın.</string>
+    <string name="pocket_import_voice">Sesi içe aktar ve klonla</string>
+    <string name="pocket_speech_failed">Konuşma oluşturulamadı. Ayarlarda klonlanmış bir Pocket TTS sesi seçin.</string>
+
+    <!-- Microphone recording for local voice cloning -->
+    <string name="pocket_record_voice">Ses kaydet</string>
+    <string name="pocket_stop_and_clone">Durdur ve klonla</string>
+    <string name="pocket_recording">Kayıt: %1$d / 30 sn</string>
+    <string name="pocket_record_failed">Kayıt veya klonlama başarısız. En az 3 saniyelik net konuşmayla tekrar deneyin.</string>
+    <string name="pocket_microphone_required">Ses kaydetmek için mikrofon erişimine izin verin.</string>
+    <string name="pocket_recorded_voice">Kayıt %1$s</string>
+
+    <!-- Supertonic custom voice file import -->
+    <string name="supertonic_import_voice">Ses JSON dosyası içe aktar</string>
+    <string name="supertonic_import_failed">Ses içe aktarılamadı. Supertonic 3 ses stili JSON dosyası seçin (en fazla 2 MB).</string>
+
+    <!-- Vibecode local Codex agent -->
+    <string name="vibe_codex_mode">Codex modu</string>
+    <string name="vibe_codex_description">Oturum açmadan seçtiğiniz yerel modeli kullanır. Komutlar Termux izinleriyle çalışır.</string>
+    <string name="vibe_codex_install">Codex’i Termux’a yükle</string>
+    <string name="vibe_codex_install_help">Termux’ta harici uygulama komutlarını etkinleştirin ve başlamadan önce Codex’i yükleyin.</string>
+    <string name="vibe_codex_installing">Codex Termux’a yükleniyor…</string>
+    <string name="vibe_codex_installed">Codex yüklendi. Seçtiğiniz yerel model kullanıma hazır.</string>
+    <string name="vibe_codex_requirements">Android 10 veya üstü ve ARM64 cihaz gerektirir.</string>
+    <string name="vibe_codex_connection_error">Termux’taki Codex’e bağlanılamadı.</string>
+    <string name="vibe_codex_model_error">Yerel model geçerli bir araç yanıtı döndürmedi. Bir kodlama modeli veya daha büyük bağlam deneyin.</string>
+    <string name="vibe_codex_conflict">Proje Vibecode dışında değişti. Oluşturulan düzenlemeler Termux çalışma alanında duruyor.</string>
+    <string name="vibe_codex_failed">Codex başarısız oldu. Termux kurulumunu, yerel modeli ve uygulama günlüklerini kontrol edin.</string>
+    <string name="vibe_codex_folder_required">Codex’i kullanmadan önce bir çalışma alanı klasörü açın.</string>
+    <string name="vibe_codex_approval">Codex onay istiyor</string>
+
+    <string name="vibe_codex_terminal">Terminal</string>
+    <string name="vibe_codex_running">Çalışıyor</string>
+    <string name="vibe_codex_stopped">Durduruldu</string>
+    <string name="vibe_codex_starting">Codex başlatılıyor…</string>
+    <string name="vibe_codex_connecting">Codex’e bağlanılıyor…</string>
+    <string name="vibe_codex_staging">Proje dosyaları hazırlanıyor…</string>
+    <string name="vibe_codex_generating">Yerel model çalışıyor…</string>
+    <string name="vibe_codex_syncing">Proje değişiklikleri uygulanıyor…</string>
+    <string name="vibe_codex_step_progress">Ajan adımı %1$d · deneme %2$d · %3$d karakter üretildi</string>
+    <string name="vibe_codex_saved_verified">%1$s kaydedildi ve içeriği doğrulandı.</string>
+    <string name="tts_voice_name">Ses adı</string>
+    <string name="tts_voice_rename_failed">Bu sesin adı değiştirilemedi. Lütfen tekrar deneyin.</string>
 </resources>

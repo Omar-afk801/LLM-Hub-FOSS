@@ -72,7 +72,7 @@
     <string name="ai_thinking">AI กำลังคิด...</string>
     <string name="thinking_label">กำลังคิด</string>
     <string name="thinking_tokens">กำลังคิด (%1$dโทเค็น)</string>
-    <string name="version_number">เวอร์ชัน 4.4.0</string>
+    <string name="version_number">เวอร์ชัน 4.5.0</string>
     <string name="app_version">เวอร์ชันของแอป</string>
     <string name="terms_of_service">ข้อกำหนดในการให้บริการ</string>
     <string name="tos_last_updated">อัปเดตล่าสุด: 22 มิถุนายน 2569</string>
@@ -914,4 +914,102 @@
     <string name="gguf_vulkan_setting">แบ็กเอนด์ GPU สำหรับ GGUF</string>
     <string name="crash_recovery_title">แอปปิดโดยไม่คาดคิด</string>
     <string name="crash_recovery_message">ลองโหลดโมเดลที่เล็กลงหรือใช้ CPU</string>
+    <string name="feature_photo_search">Instant Media Search</string>
+    <string name="feature_photo_search_desc">Organize and search your photos and videos locally with EmbeddingGemma 2</string>
+    <string name="feature_video_moment">Video Moment Finder</string>
+    <string name="feature_video_moment_desc">Search for moments in videos using natural language with EmbeddingGemma 2</string>
+    <string name="video_moment_onboarding_title">Search for a moment inside your videos</string>
+    <string name="video_moment_onboarding_desc">EmbeddingGemma 2 splits each video into 2 second windows, reads two frames and the audio in each window, then you can jump to the moment you describe.</string>
+    <string name="video_moment_all">Analyze all videos</string>
+    <string name="video_moment_pick">Select videos</string>
+    <string name="video_moment_hint">Describe a moment, e.g. cutting a cake</string>
+    <string name="video_moment_play">Play %1$s</string>
+    <string name="feature_audio_search">ค้นหาเสียง</string>
+    <string name="feature_audio_search_desc">ค้นหาช่วงเวลาในไฟล์เสียงด้วยการบรรยาย</string>
+    <string name="media_search_download_model">ดาวน์โหลด EmbeddingGemma 2</string>
+    <string name="media_search_download_model_desc">ฟีเจอร์นี้รัน EmbeddingGemma 2 บนอุปกรณ์ของคุณ ดาวน์โหลดจากรายการโมเดลเพื่อเริ่มต้น</string>
+    <string name="media_search_loading_model">กำลังโหลด EmbeddingGemma 2…</string>
+    <string name="media_search_model_failed">โหลด EmbeddingGemma 2 ไม่สำเร็จ</string>
+    <string name="media_search_analyzing">กำลังวิเคราะห์…</string>
+    <string name="media_search_paused">หยุดการวิเคราะห์ชั่วคราว</string>
+    <string name="media_search_progress">วิเคราะห์แล้ว %1$d จาก %2$d (%3$d%%)</string>
+    <string name="media_search_pause">หยุดชั่วคราว</string>
+    <string name="media_search_resume">ดำเนินการต่อ</string>
+    <string name="media_search_incomplete_warning">ยังวิเคราะห์อยู่ ผลลัพธ์บางรายการอาจยังไม่แสดง</string>
+    <string name="media_search_no_results">ไม่พบรายการที่ตรงกัน</string>
+    <string name="media_search_library">คลัง</string>
+    <string name="media_search_clear">ล้างทั้งหมดแล้วเริ่มใหม่</string>
+    <string name="media_search_grant_access">อนุญาตการเข้าถึง</string>
+    <string name="photo_search_onboarding_title">ค้นหารูปภาพและวิดีโอโดยอธิบาย</string>
+    <string name="photo_search_onboarding_desc">EmbeddingGemma 2 วิเคราะห์รูปภาพและวิดีโอบนอุปกรณ์นี้ วิดีโอถูกอ่านจากเฟรมแรกและเฟรมสุดท้าย จากนั้นค้นหาด้วยคำธรรมดาหรือหาสิ่งที่คล้ายกันได้ ไม่มีอะไรออกจากโทรศัพท์</string>
+    <string name="photo_search_all_photos">วิเคราะห์รูปภาพและวิดีโอทั้งหมด</string>
+    <string name="photo_search_select_photos">เลือกรูปภาพและวิดีโอ</string>
+    <string name="photo_search_hint">อธิบายรูปหรือวิดีโอ เช่น สุนัขบนชายหาด</string>
+    <string name="photo_search_find_similar">ค้นหารูปภาพที่คล้ายกัน</string>
+    <string name="photo_search_similar_results">รูปภาพที่คล้ายกัน</string>
+    <string name="photo_search_permission_denied">ต้องเข้าถึงรูปภาพและวิดีโอเพื่อวิเคราะห์คลังของคุณ</string>
+    <string name="photo_search_count">วิเคราะห์รูปภาพแล้ว %1$d จาก %2$d</string>
+    <string name="audio_search_onboarding_title">ค้นหาเสียงด้วยการบรรยาย</string>
+    <string name="audio_search_onboarding_desc">EmbeddingGemma 2 แบ่งแต่ละการบันทึกเป็นช่วงสั้นๆ และวิเคราะห์บนอุปกรณ์นี้ เพื่อให้คุณข้ามไปยังส่วนที่บรรยายได้ทันที</string>
+    <string name="audio_search_scan_device">วิเคราะห์เสียงในอุปกรณ์</string>
+    <string name="audio_search_import">นำเข้าไฟล์เสียง</string>
+    <string name="audio_search_hint">บรรยายเสียง เช่น เสียงคนหัวเราะ</string>
+    <string name="audio_search_permission_denied">ต้องได้รับสิทธิ์เข้าถึงเสียงเพื่อวิเคราะห์เสียงในอุปกรณ์</string>
+    <string name="audio_search_count">วิเคราะห์ไฟล์แล้ว %1$d จาก %2$d</string>
+    <string name="audio_search_moment">เล่น %1$s</string>
+
+    <!-- Supertonic 3 -->
+    <string name="supertonic_language">ภาษาพูด</string>
+    <string name="supertonic_voice_download_failed">ดาวน์โหลดเสียงไม่สำเร็จ โปรดลองอีกครั้ง</string>
+    <string name="supertonic_model_unavailable">Supertonic 3 ไม่พร้อมใช้งาน โปรดดาวน์โหลดโมเดลให้เสร็จหรือเลือกเอนจินเสียงอื่นในการตั้งค่า</string>
+    <string name="supertonic_speech_failed">สร้างเสียงพูดไม่สำเร็จ โปรดตรวจสอบเสียงที่เลือกและเลือกภาษาที่รองรับในการตั้งค่า</string>
+
+    <!-- On-device PocketTTS.cpp voice cloning -->
+    <string name="pocket_voice_cloning">โคลนเสียง · Pocket TTS</string>
+    <string name="pocket_voice_help">บันทึกที่นี่หรือนำเข้าเสียง รองรับภาษาอังกฤษเท่านั้น นำเข้าคลิป WAV, MP3, FLAC, M4A/AAC หรือ OGG ที่ชัดเจนยาว 3–30 วินาที (ไม่เกิน 20 MB) การโคลนทำบนอุปกรณ์นี้ทั้งหมด เมื่อเลือกเสียงจะใช้ Pocket TTS ทั่วทั้งแอป ยกเว้นตัวแปลภาษา</string>
+    <string name="pocket_model_required">ดาวน์โหลด Pocket TTS จากหน้าดาวน์โหลดโมเดลก่อน</string>
+    <string name="pocket_cloning">กำลังโคลนเสียงบนอุปกรณ์นี้…</string>
+    <string name="pocket_clone_failed">ไม่สามารถโคลนเสียงได้ โปรดใช้คลิปเสียงพูด WAV, MP3, FLAC, M4A/AAC หรือ OGG ที่ชัดเจนยาวอย่างน้อย 3 วินาที</string>
+    <string name="pocket_import_voice">นำเข้าและโคลนเสียง</string>
+    <string name="pocket_speech_failed">ไม่สามารถสร้างเสียงพูดได้ เลือกเสียง Pocket TTS ที่โคลนแล้วในการตั้งค่า</string>
+
+    <!-- Microphone recording for local voice cloning -->
+    <string name="pocket_record_voice">บันทึกเสียง</string>
+    <string name="pocket_stop_and_clone">หยุดและโคลน</string>
+    <string name="pocket_recording">กำลังบันทึก: %1$d / 30 วินาที</string>
+    <string name="pocket_record_failed">บันทึกหรือโคลนไม่สำเร็จ ลองอีกครั้งด้วยเสียงพูดที่ชัดเจนอย่างน้อย 3 วินาที</string>
+    <string name="pocket_microphone_required">อนุญาตให้เข้าถึงไมโครโฟนเพื่อบันทึกเสียง</string>
+    <string name="pocket_recorded_voice">เสียงบันทึก %1$s</string>
+
+    <!-- Supertonic custom voice file import -->
+    <string name="supertonic_import_voice">นำเข้าเสียง JSON</string>
+    <string name="supertonic_import_failed">ไม่สามารถนำเข้าเสียงนี้ได้ เลือกไฟล์ JSON รูปแบบเสียง Supertonic 3 (สูงสุด 2 MB)</string>
+
+    <!-- Vibecode local Codex agent -->
+    <string name="vibe_codex_mode">โหมด Codex</string>
+    <string name="vibe_codex_description">ใช้โมเดลในเครื่องที่คุณเลือกโดยไม่ต้องเข้าสู่ระบบ คำสั่งทำงานด้วยสิทธิ์ของ Termux</string>
+    <string name="vibe_codex_install">ติดตั้ง Codex ใน Termux</string>
+    <string name="vibe_codex_install_help">เปิดใช้คำสั่งจากแอปภายนอกใน Termux แล้วติดตั้ง Codex ก่อนเริ่มต้น</string>
+    <string name="vibe_codex_installing">กำลังติดตั้ง Codex ใน Termux…</string>
+    <string name="vibe_codex_installed">ติดตั้ง Codex แล้ว โมเดลในเครื่องที่คุณเลือกพร้อมใช้งาน</string>
+    <string name="vibe_codex_requirements">ต้องใช้ Android 10 ขึ้นไปและอุปกรณ์ ARM64</string>
+    <string name="vibe_codex_connection_error">เชื่อมต่อกับ Codex ใน Termux ไม่ได้</string>
+    <string name="vibe_codex_model_error">โมเดลในเครื่องไม่ได้ส่งการตอบกลับเครื่องมือที่ถูกต้อง ลองใช้โมเดลเขียนโค้ดหรือบริบทที่ใหญ่ขึ้น</string>
+    <string name="vibe_codex_conflict">โปรเจ็กต์ถูกเปลี่ยนแปลงภายนอก Vibecode การแก้ไขที่สร้างขึ้นยังอยู่ในพื้นที่ทำงาน Termux</string>
+    <string name="vibe_codex_failed">Codex ทำงานไม่สำเร็จ ตรวจสอบการตั้งค่า Termux โมเดลในเครื่อง และบันทึกของแอป</string>
+    <string name="vibe_codex_folder_required">เปิดโฟลเดอร์พื้นที่ทำงานก่อนใช้ Codex</string>
+    <string name="vibe_codex_approval">Codex ขอการอนุมัติ</string>
+
+    <string name="vibe_codex_terminal">เทอร์มินัล</string>
+    <string name="vibe_codex_running">กำลังทำงาน</string>
+    <string name="vibe_codex_stopped">หยุดแล้ว</string>
+    <string name="vibe_codex_starting">กำลังเริ่ม Codex…</string>
+    <string name="vibe_codex_connecting">กำลังเชื่อมต่อกับ Codex…</string>
+    <string name="vibe_codex_staging">กำลังเตรียมไฟล์โปรเจ็กต์…</string>
+    <string name="vibe_codex_generating">โมเดลในเครื่องกำลังทำงาน…</string>
+    <string name="vibe_codex_syncing">กำลังนำการเปลี่ยนแปลงไปใช้กับโปรเจ็กต์…</string>
+    <string name="vibe_codex_step_progress">ขั้นตอนเอเจนต์ %1$d · ครั้งที่ %2$d · สร้างแล้ว %3$d อักขระ</string>
+    <string name="vibe_codex_saved_verified">บันทึก %1$s และตรวจสอบเนื้อหาแล้ว</string>
+    <string name="tts_voice_name">ชื่อเสียง</string>
+    <string name="tts_voice_rename_failed">ไม่สามารถเปลี่ยนชื่อเสียงนี้ได้ โปรดลองอีกครั้ง</string>
 </resources>

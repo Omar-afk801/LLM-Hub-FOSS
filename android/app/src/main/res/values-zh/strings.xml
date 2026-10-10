@@ -78,7 +78,7 @@
     <string name="ai_thinking">AI 思考中...</string>
     <string name="thinking_label">深度思考</string>
     <string name="thinking_tokens">思考 (%1$d tokens)</string>
-    <string name="version_number">版本号 4.4.0</string>
+    <string name="version_number">版本号 4.5.0</string>
     <string name="app_version">应用版本</string>
     
     <!-- Terms of Service -->
@@ -1015,4 +1015,102 @@
     <string name="gguf_vulkan_setting">GGUF GPU 后端</string>
     <string name="crash_recovery_title">应用意外关闭</string>
     <string name="crash_recovery_message">请尝试加载更小的模型或使用 CPU。</string>
+    <string name="feature_photo_search">Instant Media Search</string>
+    <string name="feature_photo_search_desc">Organize and search your photos and videos locally with EmbeddingGemma 2</string>
+    <string name="feature_video_moment">Video Moment Finder</string>
+    <string name="feature_video_moment_desc">Search for moments in videos using natural language with EmbeddingGemma 2</string>
+    <string name="video_moment_onboarding_title">Search for a moment inside your videos</string>
+    <string name="video_moment_onboarding_desc">EmbeddingGemma 2 splits each video into 2 second windows, reads two frames and the audio in each window, then you can jump to the moment you describe.</string>
+    <string name="video_moment_all">Analyze all videos</string>
+    <string name="video_moment_pick">Select videos</string>
+    <string name="video_moment_hint">Describe a moment, e.g. cutting a cake</string>
+    <string name="video_moment_play">Play %1$s</string>
+    <string name="feature_audio_search">音频搜索</string>
+    <string name="feature_audio_search_desc">通过描述查找音频中的片段</string>
+    <string name="media_search_download_model">下载 EmbeddingGemma 2</string>
+    <string name="media_search_download_model_desc">此功能在设备上运行 EmbeddingGemma 2。请先从模型列表下载。</string>
+    <string name="media_search_loading_model">正在加载 EmbeddingGemma 2…</string>
+    <string name="media_search_model_failed">无法加载 EmbeddingGemma 2</string>
+    <string name="media_search_analyzing">正在分析…</string>
+    <string name="media_search_paused">分析已暂停</string>
+    <string name="media_search_progress">已分析 %1$d / %2$d（%3$d%%）</string>
+    <string name="media_search_pause">暂停</string>
+    <string name="media_search_resume">继续</string>
+    <string name="media_search_incomplete_warning">仍在分析中，部分结果可能缺失。</string>
+    <string name="media_search_no_results">未找到匹配项</string>
+    <string name="media_search_library">资料库</string>
+    <string name="media_search_clear">全部清除并重新开始</string>
+    <string name="media_search_grant_access">允许访问</string>
+    <string name="photo_search_onboarding_title">用描述搜索照片和视频</string>
+    <string name="photo_search_onboarding_desc">EmbeddingGemma 2 会在本机分析你的照片和视频。视频读取第一帧和最后一帧。之后可以用普通词语搜索，或查找相似内容。没有任何内容离开手机。</string>
+    <string name="photo_search_all_photos">分析全部照片和视频</string>
+    <string name="photo_search_select_photos">选择照片和视频</string>
+    <string name="photo_search_hint">描述一张照片或一段视频，例如沙滩上的狗</string>
+    <string name="photo_search_find_similar">查找相似照片</string>
+    <string name="photo_search_similar_results">相似照片</string>
+    <string name="photo_search_permission_denied">分析资料库需要照片和视频访问权限。</string>
+    <string name="photo_search_count">已分析 %1$d / %2$d 张照片</string>
+    <string name="audio_search_onboarding_title">通过描述搜索音频</string>
+    <string name="audio_search_onboarding_desc">EmbeddingGemma 2 会把每段录音切分成短片段并在此设备上分析，让你直接跳到所描述的部分。</string>
+    <string name="audio_search_scan_device">分析设备上的音频</string>
+    <string name="audio_search_import">导入音频文件</string>
+    <string name="audio_search_hint">描述一种声音，例如：人们在笑</string>
+    <string name="audio_search_permission_denied">需要音频访问权限才能分析设备上的音频。</string>
+    <string name="audio_search_count">已分析 %1$d / %2$d 个文件</string>
+    <string name="audio_search_moment">播放 %1$s</string>
+
+    <!-- Supertonic 3 -->
+    <string name="supertonic_language">语音语言</string>
+    <string name="supertonic_voice_download_failed">声音下载失败，请重试。</string>
+    <string name="supertonic_model_unavailable">Supertonic 3 不可用。请完成模型下载，或在设置中选择其他语音引擎。</string>
+    <string name="supertonic_speech_failed">语音生成失败。请检查所选声音，并在设置中选择支持的语音语言。</string>
+
+    <!-- On-device PocketTTS.cpp voice cloning -->
+    <string name="pocket_voice_cloning">声音克隆 · Pocket TTS</string>
+    <string name="pocket_voice_help">在此录音或导入音频。仅支持英语。导入清晰的3–30秒WAV、MP3、FLAC、M4A/AAC或OGG语音片段（最大20 MB）。克隆完全在本机进行。选择声音后，除翻译功能外，整个应用将使用Pocket TTS。</string>
+    <string name="pocket_model_required">请先从模型下载页面下载Pocket TTS。</string>
+    <string name="pocket_cloning">正在本机克隆声音…</string>
+    <string name="pocket_clone_failed">无法克隆此声音。请使用至少3秒的清晰WAV、MP3、FLAC、M4A/AAC或OGG语音片段。</string>
+    <string name="pocket_import_voice">导入并克隆声音</string>
+    <string name="pocket_speech_failed">无法生成语音。请在设置中选择Pocket TTS克隆声音。</string>
+
+    <!-- Microphone recording for local voice cloning -->
+    <string name="pocket_record_voice">录制声音</string>
+    <string name="pocket_stop_and_clone">停止并克隆</string>
+    <string name="pocket_recording">录音中：%1$d / 30秒</string>
+    <string name="pocket_record_failed">录音或克隆失败。请用至少3秒的清晰语音重试。</string>
+    <string name="pocket_microphone_required">请允许访问麦克风以录制声音。</string>
+    <string name="pocket_recorded_voice">录音 %1$s</string>
+
+    <!-- Supertonic custom voice file import -->
+    <string name="supertonic_import_voice">导入声音JSON</string>
+    <string name="supertonic_import_failed">无法导入此声音。请选择Supertonic 3声音风格JSON文件（最大2 MB）。</string>
+
+    <!-- Vibecode local Codex agent -->
+    <string name="vibe_codex_mode">Codex 模式</string>
+    <string name="vibe_codex_description">无需登录，使用你选择的本地模型。命令以 Termux 的权限运行。</string>
+    <string name="vibe_codex_install">在 Termux 中安装 Codex</string>
+    <string name="vibe_codex_install_help">在 Termux 中启用外部应用命令，并在开始前安装 Codex。</string>
+    <string name="vibe_codex_installing">正在 Termux 中安装 Codex…</string>
+    <string name="vibe_codex_installed">Codex 已安装。你选择的本地模型已可使用。</string>
+    <string name="vibe_codex_requirements">需要 Android 10 或更高版本以及 ARM64 设备。</string>
+    <string name="vibe_codex_connection_error">无法连接到 Termux 中的 Codex。</string>
+    <string name="vibe_codex_model_error">本地模型未返回有效的工具响应。请尝试编程模型或更大的上下文。</string>
+    <string name="vibe_codex_conflict">项目在 Vibecode 外发生了更改。生成的修改仍保留在 Termux 工作区中。</string>
+    <string name="vibe_codex_failed">Codex 运行失败。请检查 Termux 设置、本地模型和应用日志。</string>
+    <string name="vibe_codex_folder_required">使用 Codex 前请打开工作区文件夹。</string>
+    <string name="vibe_codex_approval">Codex 请求批准</string>
+
+    <string name="vibe_codex_terminal">终端</string>
+    <string name="vibe_codex_running">运行中</string>
+    <string name="vibe_codex_stopped">已停止</string>
+    <string name="vibe_codex_starting">正在启动 Codex…</string>
+    <string name="vibe_codex_connecting">正在连接 Codex…</string>
+    <string name="vibe_codex_staging">正在准备项目文件…</string>
+    <string name="vibe_codex_generating">本地模型正在工作…</string>
+    <string name="vibe_codex_syncing">正在应用项目更改…</string>
+    <string name="vibe_codex_step_progress">代理步骤 %1$d · 第 %2$d 次尝试 · 已生成 %3$d 个字符</string>
+    <string name="vibe_codex_saved_verified">已保存 %1$s 并验证其内容。</string>
+    <string name="tts_voice_name">声音名称</string>
+    <string name="tts_voice_rename_failed">无法重命名此声音。请重试。</string>
 </resources>

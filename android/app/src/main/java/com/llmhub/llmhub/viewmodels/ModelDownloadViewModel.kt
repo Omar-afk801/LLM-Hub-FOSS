@@ -22,6 +22,7 @@ import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.llmhub.llmhub.data.localFileName
+import com.llmhub.llmhub.data.matchesOwnModelFile
 import android.content.Context
 import com.llmhub.llmhub.BuildConfig
 import com.llmhub.llmhub.data.isModelFileValid
@@ -333,7 +334,8 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                         android.util.Log.d("ModelDownloadViewModel", "[loadModels:onnx] dir=${onnxModelDir.absolutePath} fileCount=$fileCount totalDownloaded=$totalDownloaded expectedFileCount=$expectedFileCount")
                         
                         // Check if we have all expected files AND if the size is close to expected
-                        val completeEnough = fileCount >= expectedFileCount && (model.sizeBytes <= 0 || totalDownloaded >= (model.sizeBytes * 0.98).toLong())
+                        val completeEnough = if (model.name in setOf(com.llmhub.llmhub.data.SupertonicModel.NAME, com.llmhub.llmhub.data.PocketTtsModel.NAME)) model.hasCompleteDownloadedBundle(context)
+                        else fileCount >= expectedFileCount && (model.sizeBytes <= 0 || totalDownloaded >= (model.sizeBytes * 0.98).toLong())
                         
                         if (completeEnough) {
                             model.copy(
@@ -415,7 +417,15 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
             } else if (model.category == "image_upscale") {
                 val upscalerModelsDir = File(context.filesDir, "upscaler_models")
                 val safeName = model.name.replace(Regex("[^a-zA-Z0-9_\\-]"), "_")
-                val modelFile = File(upscalerModelsDir, "$safeName/upscaler.bin")
+                val targetFileName = if (model.modelFormat == "tflite" || model.localFileName().endsWith(".tflite")) {
+                    "upscaler.tflite"
+                } else {
+                    "upscaler.bin"
+                }
+                val modelFile = File(upscalerModelsDir, "$safeName/upscaler.tflite").takeIf { it.exists() }
+                    ?: File(upscalerModelsDir, "$safeName/upscaler.bin").takeIf { it.exists() }
+                    ?: File(upscalerModelsDir, "$safeName/${model.localFileName()}").takeIf { it.exists() }
+                    ?: File(upscalerModelsDir, "$safeName/$targetFileName")
                 val downloaded = modelFile.exists() && modelFile.length() > 0
                 val fileSize = if (downloaded) modelFile.length() else 0L
                 model.copy(
@@ -441,10 +451,7 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                 // the app was killed and allow resume.
                 var file: File = primaryFile
                 if (!file.exists()) {
-                    val baseName = model.localFileName().substringBeforeLast('.')
-                    val found = modelsDir.listFiles()?.firstOrNull { 
-                        it.name.startsWith(baseName) && (baseName.endsWith(".en") || !it.name.contains(".en"))
-                    }
+                    val found = modelsDir.listFiles()?.firstOrNull { model.matchesOwnModelFile(it.name) }
                     if (found != null) file = found
                 }
 
@@ -723,7 +730,12 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                         val safeName = model.name.replace(Regex("[^a-zA-Z0-9_\\-]"), "_")
                         val modelDir = File(upscalerModelsDir, safeName)
                         modelDir.mkdirs()
-                        val destFile = File(modelDir, "upscaler.bin")
+                        val targetFileName = if (model.modelFormat == "tflite" || model.localFileName().endsWith(".tflite")) {
+                            "upscaler.tflite"
+                        } else {
+                            "upscaler.bin"
+                        }
+                        val destFile = File(modelDir, targetFileName)
                         // The downloaded file is in the standard models/ temp location — move/copy it
                         val tempFile = File(context.filesDir, "models/${model.localFileName()}")
                         if (tempFile.exists()) {
@@ -754,7 +766,8 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                             val expectedFileCount = 1 + model.additionalFiles.size
                             
                             val expectedTotal = if (latestStatus != null && latestStatus!!.totalBytes > 0) latestStatus!!.totalBytes else model.sizeBytes
-                            val completeEnough = fileCount >= expectedFileCount && (expectedTotal <= 0 || totalDownloaded >= (expectedTotal * 0.98).toLong())
+                            val completeEnough = if (model.name in setOf(com.llmhub.llmhub.data.SupertonicModel.NAME, com.llmhub.llmhub.data.PocketTtsModel.NAME)) model.hasCompleteDownloadedBundle(context)
+                            else fileCount >= expectedFileCount && (expectedTotal <= 0 || totalDownloaded >= (expectedTotal * 0.98).toLong())
                             
                             if (completeEnough && cause == null) {
                                 android.util.Log.i("ModelDownloadViewModel", "ONNX/WhisperKit model download completed: ${model.name}, files: $fileCount/$expectedFileCount, size: $totalDownloaded")
@@ -955,10 +968,8 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                     val legacy = File(modelsDir, "${model.name.replace(" ", "_")}.gguf")
                     if (legacy.exists()) legacy.delete()
 
-                    val base = model.localFileName().substringBeforeLast('.')
                     modelsDir.listFiles()?.forEach { f ->
-                        val matchesBase = f.name.startsWith(base) && (base.endsWith(".en") || !f.name.contains(".en"))
-                        if (matchesBase && f.name != model.localFileName()) {
+                        if (model.matchesOwnModelFile(f.name) && f.name != model.localFileName()) {
                             try { f.delete() } catch (_: Exception) { }
                         }
                     }

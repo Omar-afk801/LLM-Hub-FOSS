@@ -77,7 +77,7 @@
     <string name="ai_thinking">ה-AI חושב…</string>
     <string name="thinking_label">חשיבה</string>
     <string name="thinking_tokens">חשיבה (%1$d אסימונים)</string>
-    <string name="version_number">גרסה 4.4.0</string>
+    <string name="version_number">גרסה 4.5.0</string>
     <string name="app_version">גרסת אפליקציה</string>
 
     <!-- Terms of Service -->
@@ -1006,4 +1006,102 @@
     <string name="gguf_vulkan_setting">מנוע GPU של GGUF</string>
     <string name="crash_recovery_title">האפליקציה נסגרה באופן בלתי צפוי</string>
     <string name="crash_recovery_message">אפשר לנסות לטעון מודל קטן יותר או להשתמש במעבד.</string>
+    <string name="feature_photo_search">Instant Media Search</string>
+    <string name="feature_photo_search_desc">Organize and search your photos and videos locally with EmbeddingGemma 2</string>
+    <string name="feature_video_moment">Video Moment Finder</string>
+    <string name="feature_video_moment_desc">Search for moments in videos using natural language with EmbeddingGemma 2</string>
+    <string name="video_moment_onboarding_title">Search for a moment inside your videos</string>
+    <string name="video_moment_onboarding_desc">EmbeddingGemma 2 splits each video into 2 second windows, reads two frames and the audio in each window, then you can jump to the moment you describe.</string>
+    <string name="video_moment_all">Analyze all videos</string>
+    <string name="video_moment_pick">Select videos</string>
+    <string name="video_moment_hint">Describe a moment, e.g. cutting a cake</string>
+    <string name="video_moment_play">Play %1$s</string>
+    <string name="feature_audio_search">חיפוש שמע</string>
+    <string name="feature_audio_search_desc">מצאו רגעים בקובצי השמע באמצעות תיאור</string>
+    <string name="media_search_download_model">הורדת EmbeddingGemma 2</string>
+    <string name="media_search_download_model_desc">התכונה הזו מריצה את EmbeddingGemma 2 במכשיר. הורידו אותו מרשימת המודלים כדי להתחיל.</string>
+    <string name="media_search_loading_model">טוען את EmbeddingGemma 2…</string>
+    <string name="media_search_model_failed">לא ניתן לטעון את EmbeddingGemma 2</string>
+    <string name="media_search_analyzing">מנתח…</string>
+    <string name="media_search_paused">הניתוח הושהה</string>
+    <string name="media_search_progress">נותחו %1$d מתוך %2$d (%3$d%%)</string>
+    <string name="media_search_pause">השהיה</string>
+    <string name="media_search_resume">המשך</string>
+    <string name="media_search_incomplete_warning">הניתוח עדיין פועל, ולכן ייתכן שחסרות תוצאות.</string>
+    <string name="media_search_no_results">לא נמצאו התאמות</string>
+    <string name="media_search_library">ספרייה</string>
+    <string name="media_search_clear">ניקוי הכול והתחלה מחדש</string>
+    <string name="media_search_grant_access">מתן גישה</string>
+    <string name="photo_search_onboarding_title">חפשו תמונות וסרטונים על ידי תיאור שלהם</string>
+    <string name="photo_search_onboarding_desc">EmbeddingGemma 2 מנתח את התמונות והסרטונים במכשיר הזה. סרטונים נקראים מהפריים הראשון והאחרון. אחר כך אפשר לחפש במילים רגילות או למצוא פריטים דומים. שום דבר לא יוצא מהטלפון.</string>
+    <string name="photo_search_all_photos">נתח את כל התמונות והסרטונים</string>
+    <string name="photo_search_select_photos">בחרו תמונות וסרטונים</string>
+    <string name="photo_search_hint">תארו תמונה או סרטון, למשל כלב על החוף</string>
+    <string name="photo_search_find_similar">מציאת תמונות דומות</string>
+    <string name="photo_search_similar_results">תמונות דומות</string>
+    <string name="photo_search_permission_denied">נדרשת גישה לתמונות ולסרטונים כדי לנתח את הספרייה.</string>
+    <string name="photo_search_count">נותחו %1$d מתוך %2$d תמונות</string>
+    <string name="audio_search_onboarding_title">חפשו בשמע באמצעות תיאור</string>
+    <string name="audio_search_onboarding_desc">EmbeddingGemma 2 מחלק כל הקלטה לרגעים קצרים ומנתח אותם במכשיר הזה, כדי לקפוץ ישר לקטע שתיארתם.</string>
+    <string name="audio_search_scan_device">ניתוח השמע במכשיר</string>
+    <string name="audio_search_import">ייבוא קובצי שמע</string>
+    <string name="audio_search_hint">תארו צליל, למשל אנשים צוחקים</string>
+    <string name="audio_search_permission_denied">נדרשת גישה לשמע כדי לנתח את השמע במכשיר.</string>
+    <string name="audio_search_count">נותחו %1$d מתוך %2$d קבצים</string>
+    <string name="audio_search_moment">ניגון %1$s</string>
+
+    <!-- Supertonic 3 -->
+    <string name="supertonic_language">שפת הדיבור</string>
+    <string name="supertonic_voice_download_failed">הורדת הקול נכשלה. נסו שוב.</string>
+    <string name="supertonic_model_unavailable">Supertonic 3 אינו זמין. השלימו את הורדת המודל או בחרו מנוע דיבור אחר בהגדרות.</string>
+    <string name="supertonic_speech_failed">יצירת הדיבור נכשלה. בדקו את הקול שנבחר ובחרו שפה נתמכת בהגדרות.</string>
+
+    <!-- On-device PocketTTS.cpp voice cloning -->
+    <string name="pocket_voice_cloning">שכפול קול · Pocket TTS</string>
+    <string name="pocket_voice_help">הקליטו כאן או ייבאו אודיו. אנגלית בלבד. יש לייבא קטע WAV, MP3, FLAC, M4A/AAC או OGG ברור באורך 3–30 שניות (עד 20 MB). השכפול מתבצע כולו במכשיר זה. בחירת קול מפעילה את Pocket TTS בכל האפליקציה מלבד המתרגם.</string>
+    <string name="pocket_model_required">תחילה יש להוריד את Pocket TTS ממסך הורדת המודלים.</string>
+    <string name="pocket_cloning">משכפל קול במכשיר זה…</string>
+    <string name="pocket_clone_failed">לא ניתן לשכפל את הקול. יש להשתמש בקטע דיבור ברור מסוג WAV, MP3, FLAC, M4A/AAC או OGG באורך 3 שניות לפחות.</string>
+    <string name="pocket_import_voice">ייבוא ושכפול קול</string>
+    <string name="pocket_speech_failed">לא ניתן ליצור דיבור. יש לבחור קול משוכפל של Pocket TTS בהגדרות.</string>
+
+    <!-- Microphone recording for local voice cloning -->
+    <string name="pocket_record_voice">הקלטת קול</string>
+    <string name="pocket_stop_and_clone">עצירה ושכפול</string>
+    <string name="pocket_recording">מקליט: %1$d / 30 שניות</string>
+    <string name="pocket_record_failed">ההקלטה או השכפול נכשלו. נסו שוב עם לפחות 3 שניות של דיבור ברור.</string>
+    <string name="pocket_microphone_required">יש לאפשר גישה למיקרופון כדי להקליט קול.</string>
+    <string name="pocket_recorded_voice">הקלטה %1$s</string>
+
+    <!-- Supertonic custom voice file import -->
+    <string name="supertonic_import_voice">ייבוא קול JSON</string>
+    <string name="supertonic_import_failed">לא ניתן לייבא את הקול. בחרו קובץ JSON של סגנון קול Supertonic 3 (עד 2 MB).</string>
+
+    <!-- Vibecode local Codex agent -->
+    <string name="vibe_codex_mode">מצב Codex</string>
+    <string name="vibe_codex_description">משתמש במודל המקומי שבחרת ללא התחברות. פקודות מופעלות עם הרשאות Termux.</string>
+    <string name="vibe_codex_install">התקנת Codex ב-Termux</string>
+    <string name="vibe_codex_install_help">יש להפעיל פקודות מיישומים חיצוניים ב-Termux ולהתקין את Codex לפני ההתחלה.</string>
+    <string name="vibe_codex_installing">מתקין את Codex ב-Termux…</string>
+    <string name="vibe_codex_installed">Codex מותקן. המודל המקומי שבחרת מוכן לשימוש.</string>
+    <string name="vibe_codex_requirements">נדרשים Android 10 ואילך ומכשיר ARM64.</string>
+    <string name="vibe_codex_connection_error">לא ניתן להתחבר ל-Codex ב-Termux.</string>
+    <string name="vibe_codex_model_error">המודל המקומי לא החזיר תגובת כלי תקינה. נסה מודל תכנות או הקשר גדול יותר.</string>
+    <string name="vibe_codex_conflict">הפרויקט השתנה מחוץ ל-Vibecode. השינויים שנוצרו נשארים בסביבת העבודה של Termux.</string>
+    <string name="vibe_codex_failed">Codex נכשל. בדוק את הגדרות Termux, המודל המקומי ויומני היישום.</string>
+    <string name="vibe_codex_folder_required">יש לפתוח תיקיית עבודה לפני השימוש ב-Codex.</string>
+    <string name="vibe_codex_approval">Codex מבקש אישור</string>
+
+    <string name="vibe_codex_terminal">מסוף</string>
+    <string name="vibe_codex_running">פועל</string>
+    <string name="vibe_codex_stopped">נעצר</string>
+    <string name="vibe_codex_starting">מפעיל את Codex…</string>
+    <string name="vibe_codex_connecting">מתחבר ל-Codex…</string>
+    <string name="vibe_codex_staging">מכין את קובצי הפרויקט…</string>
+    <string name="vibe_codex_generating">המודל המקומי עובד…</string>
+    <string name="vibe_codex_syncing">מחיל שינויים בפרויקט…</string>
+    <string name="vibe_codex_step_progress">שלב סוכן %1$d · ניסיון %2$d · נוצרו %3$d תווים</string>
+    <string name="vibe_codex_saved_verified">%1$s נשמר והתוכן שלו אומת.</string>
+    <string name="tts_voice_name">שם הקול</string>
+    <string name="tts_voice_rename_failed">לא ניתן לשנות את שם הקול הזה. נסו שוב.</string>
 </resources>

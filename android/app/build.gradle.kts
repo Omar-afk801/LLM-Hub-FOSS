@@ -24,8 +24,8 @@ android {
         applicationId = "com.llmhub.llmhub"
         minSdk = 27
         targetSdk = 37
-        versionCode = 157
-        versionName = "4.4.0"
+        versionCode = 161
+        versionName = "4.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         val hfToken: String = localProperties.getProperty("HF_TOKEN", "")
@@ -47,7 +47,8 @@ android {
             cmake {
                 arguments += listOf(
                     "-DCMAKE_BUILD_TYPE=Release",
-                    "-DANDROID_STL=c++_static"
+                    "-DANDROID_STL=c++_static",
+                    "-DPOCKET_ONNX_DIR=${layout.buildDirectory.dir("generated/pocket-onnx").get().asFile.absolutePath}"
                 )
             }
         }
@@ -66,7 +67,7 @@ android {
         release {
             // Enable R8 code shrinking and obfuscation to meet Google Play's 25% threshold
             isMinifyEnabled = true
-            isShrinkResources = false
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -96,6 +97,13 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    sourceSets {
+        getByName("main") {
+            // QAIRT 2.50 libs extracted by extractLitertQnnLibs. Kept out of jniLibs because
+            // packaging excludes libQnn*.so (those names are also shipped, older, via assets).
+            assets.srcDir(layout.buildDirectory.dir("generated/qnnlibs_litert_assets").get().asFile)
+        }
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.0"
@@ -129,7 +137,7 @@ android {
 
             // Pick only the architecture we need to reduce size and alignment issues
             // Prevent duplicate .so files from different MediaPipe tasks modules
-            pickFirsts += setOf("**/libmediapipe_tasks_text_jni.so")
+            pickFirsts += setOf("**/libmediapipe_tasks_text_jni.so", "**/libonnxruntime.so")
             // Exclude DeepSeek OCR library to avoid 16KB page alignment issues
             excludes += setOf("**/libdeepseek-ocr.so")
             // WhisperKit 0.3.3 ships 4KB-aligned .so files (upstream bug, not yet fixed).
@@ -356,7 +364,14 @@ dependencies {
 
     // LiteRT-LM: native Kotlin API for .litertlm models (Gemma-3n, Gemma-4, etc.)
     // Replaces tasks-genai for litertlm format models. GPU enabled once 0.10.1 hits Maven.
-    implementation("com.google.ai.edge.litertlm:litertlm-android:0.17.1")
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.18.0")
+
+    // LiteRT NPU dispatch libraries for the SoC-specific EmbeddingGemma 2 .litertlm files.
+    // Qualcomm also needs QAIRT 2.50 (QNN system API 1.14). The libs in assets/qnnlibs are
+    // the older SD runtime (system API 1.5) and are extracted separately, not used here.
+    implementation("com.google.ai.edge.litert:litert-npu-runtime-qualcomm:2.3.0")
+    implementation("com.google.ai.edge.litert:litert-npu-runtime-mediatek:2.3.0")
+    implementation("com.google.ai.edge.litert:litert-npu-runtime-google-tensor:2.3.0")
 
     // CompiledModel API used by the local SoundGen text/core/decoder pipeline.
     // CompiledModel runtime used by SoundGen. Keep this pinned to the latest
@@ -406,6 +421,7 @@ dependencies {
 
 
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20250107")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -502,6 +518,45 @@ tasks.register("ensureAssetsForApk") {
     }
 }
 
+// QAIRT 2.50 for EmbeddingGemma 2 Qualcomm NPU models. LiteRT 2.3's dispatch requires QNN
+// system API 1.14.0, which this runtime reports. The older libs in assets/qnnlibs stay
+// for Stable Diffusion and are not used here.
+val litertQnnRuntime: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    isTransitive = false
+}
+dependencies {
+    add("litertQnnRuntime", "com.qualcomm.qti:qnn-runtime:2.50.0")
+}
+val extractLitertQnnLibs = tasks.register<Copy>("extractLitertQnnLibs") {
+    from({ zipTree(litertQnnRuntime.singleFile) }) {
+        include(
+            "jni/arm64-v8a/libQnnSystem.so",
+            "jni/arm64-v8a/libQnnHtp.so",
+            "jni/arm64-v8a/libQnnHtpV73Skel.so",
+            "jni/arm64-v8a/libQnnHtpV73Stub.so",
+            "jni/arm64-v8a/libQnnHtpV75Skel.so",
+            "jni/arm64-v8a/libQnnHtpV75Stub.so",
+            "jni/arm64-v8a/libQnnHtpV79Skel.so",
+            "jni/arm64-v8a/libQnnHtpV79Stub.so",
+            "jni/arm64-v8a/libQnnHtpV81Skel.so",
+            "jni/arm64-v8a/libQnnHtpV81Stub.so"
+        )
+        eachFile {
+            path = name
+        }
+        includeEmptyDirs = false
+    }
+    into(layout.buildDirectory.dir("generated/qnnlibs_litert_assets/qnnlibs_litert"))
+}
+tasks.configureEach {
+    // Lint also reads the generated asset source directory, independently of asset merging.
+    if ((name.startsWith("merge") && name.contains("Assets")) || name.contains("lint", ignoreCase = true)) {
+        dependsOn(extractLitertQnnLibs)
+    }
+}
+
 // Hook into bundle tasks to hide base-module assets that are delivered via asset packs in AAB
 tasks.configureEach {
     // Restore any previously-renamed source dirs after bundle finishes (success or failure)
@@ -512,4 +567,16 @@ tasks.configureEach {
     if (name.startsWith("assemble") && name.contains("Release", ignoreCase = true)) {
         dependsOn("ensureAssetsForApk")
     }
+}
+
+// Reuse precisely the same runtime binary and headers as the Java ONNX dependency.
+val pocketOnnx by configurations.creating
+dependencies { pocketOnnx("com.microsoft.onnxruntime:onnxruntime-android:1.24.1@aar") }
+val extractPocketOnnx = tasks.register<Sync>("extractPocketOnnx") {
+    from({ pocketOnnx.map { zipTree(it) } })
+    include("headers/**", "jni/arm64-v8a/libonnxruntime.so")
+    into(layout.buildDirectory.dir("generated/pocket-onnx"))
+}
+tasks.configureEach {
+    if (name.startsWith("configureCMake") || name.startsWith("buildCMake")) dependsOn(extractPocketOnnx)
 }

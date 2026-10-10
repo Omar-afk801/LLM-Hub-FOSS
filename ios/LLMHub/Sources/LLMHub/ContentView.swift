@@ -43,6 +43,12 @@ struct ContentView: View {
                                 path.append(Screen.imageUpscaler)
                             case "music_generator":
                                 path.append(Screen.musicGenerator)
+                            case "photo_search":
+                                path.append(Screen.photoSearch)
+                            case "audio_search":
+                                path.append(Screen.audioSearch)
+                            case "video_moment":
+                                path.append(Screen.videoMoment)
                             case "agent":
                                 if PurchaseManager.shared.isPremium {
                                     path.append(Screen.agent)
@@ -135,6 +141,27 @@ struct ContentView: View {
                             )
                             .navigationBarBackButtonHidden(true)
                             .enableSwipeBack()
+                        case .photoSearch:
+                            PhotoSearchScreen(
+                                onNavigateBack: { path.removeLast() },
+                                onNavigateToModels: { path.append(Screen.models) }
+                            )
+                            .navigationBarBackButtonHidden(true)
+                            .enableSwipeBack()
+                        case .videoMoment:
+                            VideoMomentScreen(
+                                onNavigateBack: { path.removeLast() },
+                                onNavigateToModels: { path.append(Screen.models) }
+                            )
+                            .navigationBarBackButtonHidden(true)
+                            .enableSwipeBack()
+                        case .audioSearch:
+                            AudioSearchScreen(
+                                onNavigateBack: { path.removeLast() },
+                                onNavigateToModels: { path.append(Screen.models) }
+                            )
+                            .navigationBarBackButtonHidden(true)
+                            .enableSwipeBack()
                         case .agent:
                             AgentScreen()
                                 .navigationBarBackButtonHidden(true)
@@ -148,6 +175,13 @@ struct ContentView: View {
                         .environmentObject(AppSettings.shared)
                 }
             }
+        }
+        .onOpenURL { url in
+            guard AudioSearchModel.isAudioURL(url) else { return }
+            AudioSearchModel.importShared([url])
+            isShowingSplash = false
+            path = NavigationPath()
+            path.append(Screen.audioSearch)
         }
     }
 }
@@ -166,6 +200,9 @@ enum Screen: Hashable {
     case videoGenerator
     case imageUpscaler
     case musicGenerator
+    case photoSearch
+    case audioSearch
+    case videoMoment
     case agent
 }
 

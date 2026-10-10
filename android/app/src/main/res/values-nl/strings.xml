@@ -72,7 +72,7 @@
     <string name="ai_thinking">AI denkt...</string>
     <string name="thinking_label">Denken</string>
     <string name="thinking_tokens">Denken (%1$dtokens)</string>
-    <string name="version_number">Versie 4.4.0</string>
+    <string name="version_number">Versie 4.5.0</string>
     <string name="app_version">App-versie</string>
     <string name="terms_of_service">Servicevoorwaarden</string>
     <string name="tos_last_updated">Laatst bijgewerkt: 22 juni 2026</string>
@@ -914,4 +914,102 @@
     <string name="gguf_vulkan_setting">GGUF GPU-backend</string>
     <string name="crash_recovery_title">App onverwacht afgesloten</string>
     <string name="crash_recovery_message">Probeer een kleiner model te laden of de CPU te gebruiken.</string>
+    <string name="feature_photo_search">Instant Media Search</string>
+    <string name="feature_photo_search_desc">Organize and search your photos and videos locally with EmbeddingGemma 2</string>
+    <string name="feature_video_moment">Video Moment Finder</string>
+    <string name="feature_video_moment_desc">Search for moments in videos using natural language with EmbeddingGemma 2</string>
+    <string name="video_moment_onboarding_title">Search for a moment inside your videos</string>
+    <string name="video_moment_onboarding_desc">EmbeddingGemma 2 splits each video into 2 second windows, reads two frames and the audio in each window, then you can jump to the moment you describe.</string>
+    <string name="video_moment_all">Analyze all videos</string>
+    <string name="video_moment_pick">Select videos</string>
+    <string name="video_moment_hint">Describe a moment, e.g. cutting a cake</string>
+    <string name="video_moment_play">Play %1$s</string>
+    <string name="feature_audio_search">Audio zoeken</string>
+    <string name="feature_audio_search_desc">Vind momenten in je audio door ze te beschrijven</string>
+    <string name="media_search_download_model">EmbeddingGemma 2 downloaden</string>
+    <string name="media_search_download_model_desc">Deze functie draait EmbeddingGemma 2 op je apparaat. Download het via de modellenlijst om te beginnen.</string>
+    <string name="media_search_loading_model">EmbeddingGemma 2 laden…</string>
+    <string name="media_search_model_failed">Kan EmbeddingGemma 2 niet laden</string>
+    <string name="media_search_analyzing">Analyseren…</string>
+    <string name="media_search_paused">Analyse gepauzeerd</string>
+    <string name="media_search_progress">%1$d van %2$d geanalyseerd (%3$d%%)</string>
+    <string name="media_search_pause">Pauzeren</string>
+    <string name="media_search_resume">Hervatten</string>
+    <string name="media_search_incomplete_warning">Nog bezig met analyseren, dus er kunnen resultaten ontbreken.</string>
+    <string name="media_search_no_results">Geen resultaten gevonden</string>
+    <string name="media_search_library">Bibliotheek</string>
+    <string name="media_search_clear">Alles wissen en opnieuw beginnen</string>
+    <string name="media_search_grant_access">Toegang toestaan</string>
+    <string name="photo_search_onboarding_title">Zoek je foto\'s en video\'s door ze te beschrijven</string>
+    <string name="photo_search_onboarding_desc">EmbeddingGemma 2 analyseert je foto\'s en video\'s op dit apparaat. Video\'s worden gelezen via het eerste en laatste beeld. Daarna kun je ze met gewone woorden zoeken of iets vergelijkbaars vinden. Er verlaat niets je telefoon.</string>
+    <string name="photo_search_all_photos">Alle foto\'s en video\'s analyseren</string>
+    <string name="photo_search_select_photos">Foto\'s en video\'s selecteren</string>
+    <string name="photo_search_hint">Beschrijf een foto of video, bijv. hond op het strand</string>
+    <string name="photo_search_find_similar">Vergelijkbare foto\'s vinden</string>
+    <string name="photo_search_similar_results">Vergelijkbare foto\'s</string>
+    <string name="photo_search_permission_denied">Toegang tot foto\'s en video\'s is nodig om je bibliotheek te analyseren.</string>
+    <string name="photo_search_count">%1$d van %2$d foto\'s geanalyseerd</string>
+    <string name="audio_search_onboarding_title">Zoek je audio door het te beschrijven</string>
+    <string name="audio_search_onboarding_desc">EmbeddingGemma 2 deelt elke opname op in korte momenten en analyseert ze op dit apparaat, zodat je direct naar het beschreven stuk springt.</string>
+    <string name="audio_search_scan_device">Audio op apparaat analyseren</string>
+    <string name="audio_search_import">Audiobestanden importeren</string>
+    <string name="audio_search_hint">Beschrijf een geluid, bijv. lachende mensen</string>
+    <string name="audio_search_permission_denied">Toegang tot audio is nodig om audio op het apparaat te analyseren.</string>
+    <string name="audio_search_count">%1$d van %2$d bestanden geanalyseerd</string>
+    <string name="audio_search_moment">%1$s afspelen</string>
+
+    <!-- Supertonic 3 -->
+    <string name="supertonic_language">Spraaktaal</string>
+    <string name="supertonic_voice_download_failed">Stem downloaden mislukt. Probeer het opnieuw.</string>
+    <string name="supertonic_model_unavailable">Supertonic 3 is niet beschikbaar. Voltooi de modeldownload of kies een andere spraakengine in Instellingen.</string>
+    <string name="supertonic_speech_failed">Spraaksynthese mislukt. Controleer de gekozen stem en kies een ondersteunde taal in Instellingen.</string>
+
+    <!-- On-device PocketTTS.cpp voice cloning -->
+    <string name="pocket_voice_cloning">Stem klonen · Pocket TTS</string>
+    <string name="pocket_voice_help">Neem hier op of importeer audio. Alleen Engels. Importeer een duidelijke WAV-, MP3-, FLAC-, M4A/AAC- of OGG-clip van 3–30 seconden (maximaal 20 MB). Het klonen gebeurt volledig op dit apparaat. De gekozen stem gebruikt Pocket TTS in de hele app behalve Vertaler.</string>
+    <string name="pocket_model_required">Download eerst Pocket TTS via het scherm voor modeldownloads.</string>
+    <string name="pocket_cloning">Stem klonen op dit apparaat…</string>
+    <string name="pocket_clone_failed">Deze stem kon niet worden gekloond. Gebruik een duidelijke WAV-, MP3-, FLAC-, M4A/AAC- of OGG-spraakclip van minstens 3 seconden.</string>
+    <string name="pocket_import_voice">Stem importeren en klonen</string>
+    <string name="pocket_speech_failed">Spraak genereren mislukt. Selecteer een gekloonde Pocket TTS-stem in Instellingen.</string>
+
+    <!-- Microphone recording for local voice cloning -->
+    <string name="pocket_record_voice">Stem opnemen</string>
+    <string name="pocket_stop_and_clone">Stoppen en klonen</string>
+    <string name="pocket_recording">Opname: %1$d / 30 s</string>
+    <string name="pocket_record_failed">Opnemen of klonen mislukt. Probeer opnieuw met minstens 3 seconden duidelijke spraak.</string>
+    <string name="pocket_microphone_required">Sta microfoontoegang toe om een stem op te nemen.</string>
+    <string name="pocket_recorded_voice">Opname %1$s</string>
+
+    <!-- Supertonic custom voice file import -->
+    <string name="supertonic_import_voice">Stem-JSON importeren</string>
+    <string name="supertonic_import_failed">Deze stem kon niet worden geïmporteerd. Kies een Supertonic 3-stemstijlbestand in JSON (maximaal 2 MB).</string>
+
+    <!-- Vibecode local Codex agent -->
+    <string name="vibe_codex_mode">Codex-modus</string>
+    <string name="vibe_codex_description">Gebruikt je geselecteerde lokale model zonder inloggen. Opdrachten worden uitgevoerd met Termux-rechten.</string>
+    <string name="vibe_codex_install">Codex installeren in Termux</string>
+    <string name="vibe_codex_install_help">Schakel opdrachten van externe apps in Termux in en installeer Codex voordat je begint.</string>
+    <string name="vibe_codex_installing">Codex wordt geïnstalleerd in Termux…</string>
+    <string name="vibe_codex_installed">Codex is geïnstalleerd. Je geselecteerde lokale model is klaar voor gebruik.</string>
+    <string name="vibe_codex_requirements">Vereist Android 10 of hoger en een ARM64-apparaat.</string>
+    <string name="vibe_codex_connection_error">Kan geen verbinding maken met Codex in Termux.</string>
+    <string name="vibe_codex_model_error">Het lokale model gaf geen geldig antwoord voor het hulpmiddel. Probeer een programmeermodel of een grotere context.</string>
+    <string name="vibe_codex_conflict">Het project is buiten Vibecode gewijzigd. Gegenereerde wijzigingen blijven in de Termux-werkruimte.</string>
+    <string name="vibe_codex_failed">Codex is mislukt. Controleer de Termux-instellingen, het lokale model en de app-logboeken.</string>
+    <string name="vibe_codex_folder_required">Open een werkruimtemap voordat je Codex gebruikt.</string>
+    <string name="vibe_codex_approval">Codex vraagt om goedkeuring</string>
+
+    <string name="vibe_codex_terminal">Terminal</string>
+    <string name="vibe_codex_running">Bezig</string>
+    <string name="vibe_codex_stopped">Gestopt</string>
+    <string name="vibe_codex_starting">Codex starten…</string>
+    <string name="vibe_codex_connecting">Verbinding maken met Codex…</string>
+    <string name="vibe_codex_staging">Projectbestanden voorbereiden…</string>
+    <string name="vibe_codex_generating">Het lokale model is bezig…</string>
+    <string name="vibe_codex_syncing">Projectwijzigingen toepassen…</string>
+    <string name="vibe_codex_step_progress">Agentstap %1$d · poging %2$d · %3$d tekens gegenereerd</string>
+    <string name="vibe_codex_saved_verified">%1$s opgeslagen en de inhoud gecontroleerd.</string>
+    <string name="tts_voice_name">Stemnaam</string>
+    <string name="tts_voice_rename_failed">Deze stem kon niet worden hernoemd. Probeer het opnieuw.</string>
 </resources>
