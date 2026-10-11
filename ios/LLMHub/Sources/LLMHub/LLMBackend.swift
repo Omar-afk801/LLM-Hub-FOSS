@@ -22,8 +22,8 @@ class LLMBackend: ObservableObject {
     @Published var loadedContextWindow: Int? = nil
 
     // Generation parameters
-    var maxTokens: Int = 2048
-    var contextWindow: Int = 2048
+    var maxTokens: Int = 4096
+    var contextWindow: Int = 4096
     var topK: Int = 64
     var topP: Float = 0.95
     var temperature: Float = 1.0
@@ -812,7 +812,7 @@ class LLMBackend: ObservableObject {
            let fileContext = GGUFLayerLimits.readContextLength(from: url) {
             return fileContext
         }
-        let advertised = model.contextWindowSize > 0 ? model.contextWindowSize : 2048
+        let advertised = model.contextWindowSize > 0 ? model.contextWindowSize : 4096
         return max(1, advertised)
     }
 
@@ -1088,6 +1088,18 @@ class LLMBackend: ObservableObject {
             } else {
                 usePrompt = strippedPrompt
             }
+        }
+
+        // DirectLlamaCppBackend feeds text verbatim, so non-raw prompts that no
+        // family-specific branch above formatted still need the GGUF's chat template.
+        // Without it the model treats the prompt as a document and just continues it.
+        let handledByFamilyTemplate = isLfmModel || isPhi4MiniModel || isHarmonyModel || isMuseGlimmerModel || isGranite42Model
+        if let model = loadedModel, model.modelFormat == .gguf,
+           !prompt.hasPrefix("__RAW_PROMPT__"), !handledByFamilyTemplate,
+           let templated = await DirectLlamaCppBackend.shared.applyChatTemplate(
+               systemPrompt: effectiveSystemPrompt, userPrompt: usePrompt
+           ) {
+            usePrompt = templated
         }
 
         if let model = loadedModel, model.modelFormat == .gguf {
