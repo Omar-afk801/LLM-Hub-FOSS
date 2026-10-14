@@ -1,5 +1,5 @@
 **NOTE** **: this is a fork of LLM Hub made to restore premium features to free users, all credits go to the original developer, @timmyy123**
-
+**and it is explicitly intended for personal use only**
 
 
 # LLM Hub 🤖
