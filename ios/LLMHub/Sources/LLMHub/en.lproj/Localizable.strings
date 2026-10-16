@@ -72,7 +72,7 @@
 "thinking_tokens" = "Thinking (%1$d tokens)";
 "enable_thinking" = "Enable Thinking";
 "thinking_toggle_label" = "Enable Thinking";
-"version_number" = "Version 4.5.0";
+"version_number" = "Version 4.5.1";
 "app_version" = "App Version";
 "terms_of_service" = "Terms of Service";
 "tos_last_updated" = "Last updated: July 16, 2025";
@@ -947,6 +947,9 @@
 "video_moment_all" = "Analyze all videos";
 "video_moment_pick" = "Select videos";
 "video_moment_hint" = "Describe a moment, e.g. cutting a cake";
+"media_search_vision_off" = "This model has no vision encoder, so photo and video search is off.";
+"video_moment_vision_off" = "This model has no vision encoder, so moment search is off.";
+"video_moment_audio_off" = "This model has no audio encoder, so clips are matched from the frames only.";
 "video_moment_play" = "Play %@";
 "video_moment_top" = "Showing top 5 results";
 "video_moment_save_edit" = "Save or edit this clip";

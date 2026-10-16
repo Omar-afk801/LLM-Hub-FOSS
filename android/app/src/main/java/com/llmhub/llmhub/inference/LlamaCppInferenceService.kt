@@ -76,7 +76,7 @@ internal object LlamaCppNative : LlamaCppRuntime {
     external override fun nativeDecodeSpeed(): Double
 }
 
-/** Official b11552 Snapdragon OpenCL/Hexagon runtime, loaded only for GPU/NPU selection. */
+/** Official b11683 Snapdragon OpenCL/Hexagon runtime, loaded only for GPU/NPU selection. */
 internal object LlamaCppSnapdragonNative : LlamaCppRuntime {
     init { System.loadLibrary("llmhub_llama_snapdragon") }
 
@@ -153,7 +153,7 @@ class LlamaCppInferenceService(private val context: Context) : InferenceService 
     private var overrideEnableThinking: Boolean? = null
 
     private fun prepareHtpLibraries(): String {
-        val directory = File(context.filesDir, "llama_htp_b11552")
+        val directory = File(context.filesDir, "llama_htp_b11683")
         check(directory.isDirectory || directory.mkdirs()) { "Cannot create Hexagon library directory" }
         for (architecture in listOf("v73", "v75", "v79", "v81")) {
             val name = "libggml-htp-$architecture.so"
@@ -623,6 +623,7 @@ class LlamaCppInferenceService(private val context: Context) : InferenceService 
         val thinking = (((model.name.contains("Thinking", true) ||
             model.name.contains("Reasoning", true) ||
             model.name.contains("LFM2.5-8B-A1B", true) ||
+            model.name.contains("LFM2.5-24B-A2B", true) ||
             model.name.contains("LFM-2.5 2.6B", true)) && !model.name.contains("muse", true)) ||
             (isGranite42 && thinkingEnabled))
         when {
