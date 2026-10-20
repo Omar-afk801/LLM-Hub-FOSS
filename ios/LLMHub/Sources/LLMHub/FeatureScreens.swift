@@ -624,6 +624,7 @@ struct FeatureModelSettingsSheet: View {
                             .liquidGlassPrimaryButton(cornerRadius: 12)
                             .tint(ApolloPalette.accentStrong)
                             .disabled(isLoading || selectedModelName.isEmpty || isRefreshingModels)
+                            .accessibilityIdentifier("feature_settings_load_button")
 
                             if isSelectedModelLoaded {
                                 Button(role: .destructive) {
@@ -647,6 +648,7 @@ struct FeatureModelSettingsSheet: View {
                                 )
                                 .foregroundStyle(ApolloPalette.destructive.opacity(0.98))
                                 .disabled(isLoading)
+                                .accessibilityIdentifier("feature_settings_unload_button")
                             }
                         }
 
@@ -665,6 +667,7 @@ struct FeatureModelSettingsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(settings.localized("done")) { dismiss() }
+                        .accessibilityIdentifier("feature_settings_done_button")
                 }
             }
             .task {
@@ -1164,7 +1167,7 @@ private struct IOS26TranscriberScreen: View {
             } else if useModelAudioInput {
                 gemmaAudioTranscriberView
             } else {
-                VStack(spacing: 12) {
+                ApolloInputOutputLayout(spacing: 12, columnsOnlyWhenShort: true) {
             VStack(spacing: 16) {
                 Button {
                     if transcriber.isRecording {
@@ -1252,7 +1255,7 @@ private struct IOS26TranscriberScreen: View {
                     .stroke(Color.white.opacity(0.14), lineWidth: 1)
             )
             .padding(.horizontal)
-
+            } output: {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -1281,7 +1284,7 @@ private struct IOS26TranscriberScreen: View {
                     }
                 }
             }
-
+            } footer: {
             Spacer(minLength: 0)
 
             Button {
@@ -1506,7 +1509,7 @@ private struct IOS26TranscriberScreen: View {
     }
 
     private var gemmaAudioTranscriberView: some View {
-        VStack(spacing: 12) {
+        ApolloInputOutputLayout(spacing: 12, columnsOnlyWhenShort: true) {
             VStack(spacing: 16) {
                 Button {
                     if audioRecorder.isRecording {
@@ -1608,7 +1611,7 @@ private struct IOS26TranscriberScreen: View {
                     .stroke(Color.white.opacity(0.14), lineWidth: 1)
             )
             .padding(.horizontal)
-
+            } output: {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -1637,7 +1640,7 @@ private struct IOS26TranscriberScreen: View {
                     }
                 }
             }
-
+            } footer: {
             Spacer(minLength: 0)
 
             Button {
@@ -1796,7 +1799,7 @@ private struct IOS26TranscriberScreen: View {
     // MARK: - Whisper Transcriber View
 
     private var whisperTranscriberView: some View {
-        VStack(spacing: 12) {
+        ApolloInputOutputLayout(spacing: 12, columnsOnlyWhenShort: true) {
             VStack(spacing: 16) {
                 Button {
                     if audioRecorder.isRecording {
@@ -1881,7 +1884,7 @@ private struct IOS26TranscriberScreen: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.14), lineWidth: 1))
             .padding(.horizontal)
-
+            } output: {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     ForEach(whisperHistory) { session in
@@ -1893,7 +1896,7 @@ private struct IOS26TranscriberScreen: View {
                 }
                 .padding(.horizontal)
             }
-
+            } footer: {
             Spacer(minLength: 0)
 
             Button {
@@ -2228,6 +2231,8 @@ private struct IOS17VibeVoiceScreen: View {
     @State private var lastRecordedAudioURL: URL?
     @State private var replyContentHeight: CGFloat = 0
     @State private var ttsReadCursor = 0
+    /// Screenshot automation (Debug only): the scripted user turn, once submitted.
+    @State private var screenshotUserTurn: String?
 
     private let ttsKey = "vibevoice-reply"
 
@@ -2264,11 +2269,13 @@ private struct IOS17VibeVoiceScreen: View {
                 } label: {
                     Image(systemName: "arrow.left")
                 }
+                .accessibilityIdentifier("nav_back_button")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button { showSettings = true } label: {
                     Image(systemName: "slider.horizontal.3")
                 }
+                .accessibilityIdentifier("feature_settings_button")
             }
         }
         .apolloSheet(isPresented: $showSettings) {
@@ -2442,6 +2449,10 @@ private struct IOS17VibeVoiceScreen: View {
                         }
                         .contentShape(Circle())
                         .onTapGesture { handleGlobeTap() }
+                        .accessibilityElement()
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityIdentifier("vibevoice_globe")
+                        .automationValue(isChatActive ? "\(voiceState)" : "inactive")
                 }
             }
             .frame(width: 248, height: 248)
@@ -2452,6 +2463,17 @@ private struct IOS17VibeVoiceScreen: View {
                 .foregroundStyle(.white.opacity(0.85))
                 .multilineTextAlignment(.center)
                 .padding(.top, 24)
+
+            if let screenshotUserTurn {
+                Text(screenshotUserTurn)
+                    .font(.footnote)
+                    .foregroundStyle(.white.opacity(0.55))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                    .padding(.top, 8)
+                    .accessibilityIdentifier("vibevoice_transcript")
+            }
 
             // Live partial transcript while listening
             if !useModelAudioInput && !transcriber.transcript.isEmpty && voiceState == .listening {
@@ -2503,6 +2525,8 @@ private struct IOS17VibeVoiceScreen: View {
                         }
                     }
                     .frame(height: min(replyContentHeight, 250))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("vibevoice_reply")
                     .padding(14)
                     .background(.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
@@ -2561,6 +2585,20 @@ private struct IOS17VibeVoiceScreen: View {
     private func startListeningCycle() async {
         NSLog("[LLMHub][VibeVoice] startListeningCycle() entered. isChatActive: \(isChatActive), isCurrentModelLoaded: \(isCurrentModelLoaded)")
         guard isChatActive && isCurrentModelLoaded else { return }
+
+        #if DEBUG
+        // Screenshot automation: submit the scripted transcript once instead of using the
+        // microphone, then stay idle so the transcript and reply remain on screen.
+        if let transcript = ScreenshotHooks.vibeVoiceTranscript {
+            guard screenshotUserTurn == nil else {
+                voiceState = .idle
+                return
+            }
+            screenshotUserTurn = transcript
+            await handleTranscript(transcript)
+            return
+        }
+        #endif
 
         voiceState = .listening
         if useModelAudioInput {
@@ -3070,6 +3108,7 @@ private struct IOS17VibeVoiceScreen: View {
         ttsManager.stop()
         voiceState = .idle
         conversationHistory = []
+        screenshotUserTurn = nil
         transcriber.cancelListening()
         audioRecorder.cancelRecording()
     }
@@ -3175,7 +3214,7 @@ struct WritingAidScreen: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                VStack(spacing: 12) {
+                ApolloInputOutputLayout(spacing: 12) {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(settings.localized("writing_aid_input_label"))
                             .font(.headline)
@@ -3239,7 +3278,7 @@ struct WritingAidScreen: View {
                             .stroke(Color.white.opacity(0.14), lineWidth: 1)
                     )
                     .padding(.horizontal)
-
+                } output: {
                     ScrollViewReader { scrollProxy in
                         ScrollView {
                             VStack(alignment: .leading, spacing: 8) {
@@ -3274,7 +3313,7 @@ struct WritingAidScreen: View {
                             }
                         }
                     }
-
+                } footer: {
                     if let errorMessage {
                         Text(errorMessage)
                             .foregroundColor(.red)
@@ -3505,6 +3544,7 @@ struct TranslatorScreen: View {
     @State private var outputText: String = ""
     @State private var isLoading = false
     @State private var isTranslating = false
+    @State private var isLandscapeLayout = false
     @State private var showSettings = false
     @State private var errorMessage: String?
     @State private var selectedImageItem: PhotosPickerItem?
@@ -3592,9 +3632,11 @@ struct TranslatorScreen: View {
                 } label: {
                     Image(systemName: "arrow.left")
                 }
+                .accessibilityIdentifier("nav_back_button")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button { showSettings = true } label: { Image(systemName: "slider.horizontal.3") }
+                    .accessibilityIdentifier("feature_settings_button")
             }
         }
         .apolloSheet(isPresented: $showSettings) {
@@ -3631,6 +3673,10 @@ struct TranslatorScreen: View {
             }
         }
         .onAppear {
+            #if DEBUG
+            // Screenshot automation: prefill the text to translate.
+            if inputText.isEmpty, let text = ScreenshotHooks.translatorInput { inputText = text }
+            #endif
             Task {
                 await refreshDownloadedModelStatus()
                 let available = downloadableFeatureModels().filter(isTranslatorSupportedModel)
@@ -3745,6 +3791,8 @@ struct TranslatorScreen: View {
         return VStack(spacing: 14) {
             languageBar
 
+            ApolloInputOutputLayout(spacing: 14) {
+
             VStack(alignment: .leading, spacing: 8) {
                 Text(settings.localized("translator_input_label"))
                     .font(.headline)
@@ -3770,6 +3818,8 @@ struct TranslatorScreen: View {
                     }
                 } else {
                     TextEditor(text: $inputText)
+                        .accessibilityIdentifier("translator_input")
+                        .screenshotAutocorrectionDisabled()
                         .frame(minHeight: 150)
                         .padding(8)
                         .scrollContentBackground(.hidden)
@@ -3896,7 +3946,7 @@ struct TranslatorScreen: View {
                     .stroke(Color.white.opacity(0.14), lineWidth: 1)
             )
             .padding(.horizontal)
-
+            } output: {
             ScrollViewReader { scrollProxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
@@ -3917,6 +3967,9 @@ struct TranslatorScreen: View {
                                 .padding(10)
                                 .background(.ultraThinMaterial)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .accessibilityElement(children: .combine)
+                                .accessibilityIdentifier("translator_output")
+                                .automationValue(isTranslating ? "translating" : "done")
                         }
                         Color.clear.frame(height: 1).id("translator_bottom")
 
@@ -3958,7 +4011,7 @@ struct TranslatorScreen: View {
                     }
                 }
             }
-
+            } footer: {
             if let errorMessage {
                 Text(errorMessage)
                     .foregroundColor(.red)
@@ -3989,13 +4042,40 @@ struct TranslatorScreen: View {
             .foregroundStyle(.white)
             .liquidGlassPrimaryButton(cornerRadius: 12)
             .disabled(isLoading || (!isTranslating && !inputHasContent))
+            .accessibilityIdentifier("translator_translate_button")
             .padding(.horizontal)
             .padding(.bottom, 8)
+            }
+        }
+        .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: { isLandscapeLayout = $0 }
+    }
+
+    /// One row in portrait. In landscape it splits like the input/output columns
+    /// below (at the iPhone Duo hinge): source and swap lead, target trails.
+    @ViewBuilder
+    private var languageBar: some View {
+        if isLandscapeLayout {
+            ApolloHingeSplit(alignment: .bottom, spacing: 0) {
+                HStack(alignment: .bottom, spacing: 10) {
+                    sourceLanguagePicker
+                    swapLanguagesButton
+                }
+                .padding(.horizontal)
+            } trailing: {
+                targetLanguagePicker
+                    .padding(.horizontal)
+            }
+        } else {
+            HStack(spacing: 10) {
+                sourceLanguagePicker
+                swapLanguagesButton
+                targetLanguagePicker
+            }
+            .padding(.horizontal)
         }
     }
 
-    private var languageBar: some View {
-        HStack(spacing: 10) {
+    private var sourceLanguagePicker: some View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(settings.localized("translator_source_lang"))
                     .font(.caption.weight(.semibold))
@@ -4027,7 +4107,9 @@ struct TranslatorScreen: View {
                 }
                 .featureActionIconButtonStyle(cornerRadius: 12)
             }
+    }
 
+    private var swapLanguagesButton: some View {
             Button {
                 let oldSource = sourceLanguageCode
                 sourceLanguageCode = targetLanguageCode
@@ -4039,7 +4121,9 @@ struct TranslatorScreen: View {
             }
             .featureActionIconButtonStyle(cornerRadius: 12)
             .disabled(autoDetectSource)
+    }
 
+    private var targetLanguagePicker: some View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(settings.localized("translator_target_lang"))
                     .font(.caption.weight(.semibold))
@@ -4066,8 +4150,6 @@ struct TranslatorScreen: View {
                 }
                 .featureActionIconButtonStyle(cornerRadius: 12)
             }
-        }
-        .padding(.horizontal)
     }
 
     private func englishName(for language: TranslatorLanguage) -> String {
@@ -4358,7 +4440,7 @@ struct ScamDetectorScreen: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                VStack(spacing: 14) {
+                ApolloInputOutputLayout(spacing: 14) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(settings.localized("scam_detector_input_label"))
                             .font(.headline)
@@ -4472,7 +4554,7 @@ struct ScamDetectorScreen: View {
                         }
                         .padding(.horizontal)
                     }
-
+                } output: {
                     ScrollViewReader { scrollProxy in
                         ScrollView {
                             VStack(alignment: .leading, spacing: 8) {
@@ -4526,7 +4608,7 @@ struct ScamDetectorScreen: View {
                             }
                         }
                     }
-
+                } footer: {
                     if let errorMessage {
                         Text(errorMessage)
                             .foregroundColor(.red)
@@ -5067,6 +5149,7 @@ struct VibeCoderScreen: View {
     @State private var currentFileURL: URL?
     @State private var currentFileName: String?
     @State private var showWorkspaceFolderPicker = false
+    @State private var isUnfolded = false
     @State private var showCreateFileDialog = false
     @State private var newFileNameInput = ""
     @State private var isLoading = false
@@ -5343,6 +5426,7 @@ struct VibeCoderScreen: View {
                                     .frame(width: 36, height: 36)
                             }
                             .disabled(activeMessages.isEmpty || isGenerating)
+                            .accessibilityIdentifier("vibecode_chat_clear_button")
 
                             Button {
                                 createNewChatSession()
@@ -5352,6 +5436,7 @@ struct VibeCoderScreen: View {
                                     .frame(width: 36, height: 36)
                             }
                             .disabled(isGenerating)
+                            .accessibilityIdentifier("vibecode_chat_new_session_button")
                         }
                         .padding(.horizontal)
 
@@ -5424,6 +5509,8 @@ struct VibeCoderScreen: View {
                             .lineLimit(1...5)
                             .focused($focusedField, equals: .chat)
                             .disabled(!hasFileSession || isGenerating || isLoading)
+                            .accessibilityIdentifier("vibecode_chat_input")
+                            .screenshotAutocorrectionDisabled()
                             .padding(.vertical, 10)
                             .padding(.horizontal, 12)
                             .background(Color.white.opacity(0.05))
@@ -5457,6 +5544,8 @@ struct VibeCoderScreen: View {
                                     .stroke(Color.white.opacity(0.16), lineWidth: 1)
                             )
                             .disabled(isSendButtonDisabled)
+                            .accessibilityIdentifier("vibecode_send_button")
+                            .automationValue(isGenerating ? "generating" : (isLoading ? "loading" : "idle"))
                         }
                         .padding(.horizontal)
                         .padding(.bottom, 8)
@@ -5468,7 +5557,6 @@ struct VibeCoderScreen: View {
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(Color.white.opacity(0.14), lineWidth: 1)
                     )
-                    .padding(.horizontal)
                 )
 
                 let editorPanel = AnyView(
@@ -5494,6 +5582,7 @@ struct VibeCoderScreen: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .frame(width: 36, height: 36)
                             }
+                            .accessibilityIdentifier("vibecode_editor_new_file_button")
 
                             Button {
                                 #if canImport(UIKit)
@@ -5542,6 +5631,7 @@ struct VibeCoderScreen: View {
                         }
 
                         TextEditor(text: $generatedCode)
+                            .accessibilityIdentifier("vibecode_editor")
                             .font(.system(.body, design: .monospaced))
                             .focused($focusedField, equals: .editor)
                             .frame(minHeight: 220)
@@ -5558,16 +5648,23 @@ struct VibeCoderScreen: View {
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(Color.white.opacity(0.14), lineWidth: 1)
                     )
-                    .padding(.horizontal)
                 )
 
                 Group {
                     if isLandscape {
-                        HStack(spacing: 12) {
+                        ApolloHingeSplit {
                             editorPanel
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .frame(maxHeight: .infinity)
+                        } trailing: {
                             chatPanel
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .frame(maxHeight: .infinity)
+                        }
+                    } else if isUnfolded {
+                        // iPhone Duo unfolded in portrait: divide the panels at the hinge.
+                        ApolloHingeVSplit {
+                            chatPanel
+                        } bottom: {
+                            editorPanel
                         }
                     } else {
                         VStack(spacing: 12) {
@@ -5576,6 +5673,7 @@ struct VibeCoderScreen: View {
                         }
                     }
                 }
+                .padding(.horizontal)
             }
 
             if let errorMessage {
@@ -5595,6 +5693,7 @@ struct VibeCoderScreen: View {
                 noFolderView
             } else {
                 workspaceView
+                    .apolloDetectsUnfoldedHinge($isUnfolded)
             }
         }
         .navigationTitle(settings.localized("vibe_coder_title"))
@@ -5620,9 +5719,11 @@ struct VibeCoderScreen: View {
                 } label: {
                     Image(systemName: "arrow.left")
                 }
+                .accessibilityIdentifier("nav_back_button")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button { showSettings = true } label: { Image(systemName: "slider.horizontal.3") }
+                    .accessibilityIdentifier("feature_settings_button")
             }
         }
         .apolloSheet(isPresented: $showSettings) {
@@ -5662,6 +5763,13 @@ struct VibeCoderScreen: View {
                 maxTokens = loadVibecoderContextWindow(for: selectedModelName)
             }
 
+            #if DEBUG
+            // Screenshot automation: use Documents/<folder> instead of the Files picker.
+            if workspaceFolderURL == nil, let screenshotWorkspace = ScreenshotHooks.vibeCodeWorkspaceURL {
+                setWorkspaceFolder(screenshotWorkspace)
+            }
+            #endif
+
             if workspaceFolderURL == nil {
                 restoreWorkspaceFolderFromBookmark()
             } else {
@@ -5675,6 +5783,28 @@ struct VibeCoderScreen: View {
             if !chatSessions.contains(where: { $0.id == activeChatSessionId }) {
                 activeChatSessionId = chatSessions.first?.id ?? activeChatSessionId
             }
+
+            #if DEBUG
+            // Screenshot automation: start from a clean chat with the file open and the
+            // request typed, so the test needs no keyboard (the keyboard toolbar trips an
+            // AttributeGraph cycle during XCUITest accessibility snapshots).
+            if workspaceFolderURL != nil, let fileName = ScreenshotHooks.vibeCodeFileName,
+               !ScreenshotHooks.vibeCodePrepared {
+                ScreenshotHooks.vibeCodePrepared = true
+                let session = VibeChatSession(title: "Chat 1")
+                chatSessions = [session]
+                activeChatSessionId = session.id
+                if let folder = workspaceFolderURL {
+                    // Start the file empty even if an earlier run left code in it.
+                    try? FileManager.default.removeItem(at: folder.appendingPathComponent(fileName))
+                }
+                newFileNameInput = fileName
+                createNewFile()
+            }
+            if let prompt = ScreenshotHooks.vibeCodePrompt, chatInput.isEmpty, !isGenerating {
+                chatInput = prompt
+            }
+            #endif
         }
         .onChange(of: chatSessions) { _, _ in
             persistChatSessionsToStorage()
@@ -6516,6 +6646,7 @@ struct ImageGeneratorScreen: View {
     @State private var seed: Int = Int.random(in: 0..<1_000_000)
     @State private var generatedImages: [UIImage] = []
     @State private var isGenerating = false
+    @State private var isUnfolded = false
     @State private var currentPage = 0
     @State private var showSettings = false
     @State private var errorMessage: String?
@@ -6541,7 +6672,7 @@ struct ImageGeneratorScreen: View {
     }
 
     private var selectedModelSupportsImageToImage: Bool {
-        guard let selectedModel else { return false }
+        guard let selectedModel else { return isInjectingResult }
         return StableDiffusionBackend.supportsImageToImage(modelId: selectedModel.id)
     }
 
@@ -6550,11 +6681,20 @@ struct ImageGeneratorScreen: View {
         return StableDiffusionBackend.isModelDownloaded(modelId: model.id)
     }
 
+    /// Screenshot automation (Debug only): show an injected image as the result.
+    private var isInjectingResult: Bool {
+        #if DEBUG
+        return ScreenshotHooks.injectImageURL != nil
+        #else
+        return false
+        #endif
+    }
+
     var body: some View {
         Group {
-            if availableModels.isEmpty {
+            if availableModels.isEmpty && !isInjectingResult {
                 noModelView
-            } else if !isModelDownloaded {
+            } else if !isModelDownloaded && !isInjectingResult {
                 loadModelView
             } else {
                 mainGenerationView
@@ -6571,9 +6711,11 @@ struct ImageGeneratorScreen: View {
                     sdBackend.unloadModel()
                     onNavigateBack()
                 } label: { Image(systemName: "arrow.left") }
+                .accessibilityIdentifier("nav_back_button")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button { showSettings = true } label: { Image(systemName: "slider.horizontal.3") }
+                    .accessibilityIdentifier("feature_settings_button")
             }
         }
         .apolloSheet(isPresented: $showSettings) {
@@ -6582,8 +6724,10 @@ struct ImageGeneratorScreen: View {
                 selectedModelId: $selectedModelId,
                 steps: $storedSteps,
                 denoiseStrength: $storedDenoiseStrength,
+                promptText: $promptText,
                 isLoaded: sdBackend.isLoaded,
                 isLoading: sdBackend.isLoading,
+                isGenerating: isGenerating,
                 onLoad: {
                     guard let model = selectedModel else { return }
                     Task {
@@ -6614,7 +6758,22 @@ struct ImageGeneratorScreen: View {
                 }
             }
         }
+        #if DEBUG
+        .task {
+            guard ScreenshotHooks.autotest == "image" else { return }
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            ScreenshotHooks.autotestLog("generating image with \(selectedModelId), prompt: \(promptText)")
+            startGeneration(clearAll: true)
+        }
+        .onChange(of: generatedImages.count) { _, count in
+            if ScreenshotHooks.autotest == "image" { ScreenshotHooks.autotestLog("images generated: \(count)") }
+        }
+        #endif
         .onAppear {
+            #if DEBUG
+            // Screenshot automation: prefill the prompt.
+            if promptText.isEmpty, let prompt = ScreenshotHooks.imagePrompt { promptText = prompt }
+            #endif
             if selectedModelId.isEmpty || !availableModels.contains(where: { $0.id == selectedModelId }) {
                 selectedModelId = availableModels.first?.id ?? ""
             }
@@ -6726,12 +6885,54 @@ struct ImageGeneratorScreen: View {
     private var mainGenerationView: some View {
         GeometryReader { geo in
             let isLandscape = geo.size.width > geo.size.height
-            if isLandscape && (!generatedImages.isEmpty || isGenerating) {
+            if isLandscape {
                 landscapeLayout
+            } else if isUnfolded {
+                hingePortraitLayout
             } else {
                 portraitLayout
             }
         }
+        .apolloDetectsUnfoldedHinge($isUnfolded)
+    }
+
+    // MARK: - Hinge Portrait Layout (stacked, divided at the iPhone Duo hinge)
+
+    private var hingePortraitLayout: some View {
+        ApolloHingeVSplit {
+            ScrollView {
+                generationControls
+                    .padding(.vertical, 12)
+            }
+            .accessibilityIdentifier("imageGenerator.inputPanel")
+        } bottom: {
+            generationOutput
+                .padding(.bottom, 12)
+        }
+        .padding(.horizontal)
+    }
+
+    private var generationControls: some View {
+        VStack(spacing: 14) {
+            promptCard
+            if selectedModelSupportsImageToImage {
+                img2imgCard
+            }
+            generateButton
+        }
+    }
+
+    private var generationOutput: some View {
+        Group {
+            if !generatedImages.isEmpty || isGenerating {
+                imageSwipeView
+            } else {
+                ApolloOutputPlaceholder(systemImage: "photo")
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .clipped()
+        .accessibilityIdentifier("imageGenerator.outputPanel")
     }
 
     // MARK: - Portrait Layout
@@ -6756,24 +6957,15 @@ struct ImageGeneratorScreen: View {
     // MARK: - Landscape Layout (side-by-side)
 
     private var landscapeLayout: some View {
-        HStack(alignment: .top, spacing: 14) {
+        ApolloHingeSplit(alignment: .top) {
             ScrollView {
-                VStack(spacing: 14) {
-                    promptCard
-                    if selectedModelSupportsImageToImage {
-                        img2imgCard
-                    }
-                    generateButton
-                    if !generatedImages.isEmpty {
-                        saveButton
-                    }
-                }
-                .padding(.vertical, 12)
+                generationControls
+                    .padding(.vertical, 12)
             }
-            .frame(maxWidth: .infinity)
-            imageSwipeView
+            .accessibilityIdentifier("imageGenerator.inputPanel")
+        } trailing: {
+            generationOutput
                 .padding(.vertical, 12)
-                .frame(maxWidth: .infinity)
         }
         .padding(.horizontal)
     }
@@ -6785,6 +6977,8 @@ struct ImageGeneratorScreen: View {
             Text(settings.localized("image_generator_prompt_label"))
                 .font(.headline)
             TextEditor(text: $promptText)
+                .accessibilityIdentifier("image_prompt")
+                .screenshotAutocorrectionDisabled()
                 .focused($promptFocused)
                 .frame(minHeight: 100)
                 .scrollContentBackground(.hidden)
@@ -6864,6 +7058,7 @@ struct ImageGeneratorScreen: View {
                         .font(.caption2)
                         .foregroundStyle(.white.opacity(0.6))
                     Slider(value: $storedDenoiseStrength, in: 0.1...1.0)
+                        .tint(ApolloPalette.accentStrong)
                         .disabled(isGenerating)
                 }
             }
@@ -6887,6 +7082,8 @@ struct ImageGeneratorScreen: View {
                             .aspectRatio(1, contentMode: .fit)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .padding(.horizontal, 4)
+                            .accessibilityElement()
+                            .accessibilityIdentifier("image_result")
                             .tag(page)
                             .contextMenu {
                                 Button {
@@ -7009,6 +7206,7 @@ struct ImageGeneratorScreen: View {
         .foregroundStyle(.white)
         .liquidGlassPrimaryButton(cornerRadius: 12)
         .disabled(!isGenerating && promptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        .accessibilityIdentifier("image_generate_button")
     }
 
     private var saveButton: some View {
@@ -7027,6 +7225,7 @@ struct ImageGeneratorScreen: View {
         }
         .foregroundStyle(.white)
         .liquidGlassPrimaryButton(cornerRadius: 12)
+        .accessibilityIdentifier("image_save_button")
     }
 
     // MARK: - Generation Logic
@@ -7042,6 +7241,9 @@ struct ImageGeneratorScreen: View {
     }
 
     private func checkForPrefetch(page: Int) {
+        #if DEBUG
+        if ScreenshotHooks.disableAutoVariation { return }
+        #endif
         guard !isGenerating, sdBackend.isLoaded, !generatedImages.isEmpty else { return }
         let shouldPrefetch = page < generatedImages.count && page == generatedImages.count - 1
         let swipedToPlaceholder = page == generatedImages.count
@@ -7067,6 +7269,13 @@ struct ImageGeneratorScreen: View {
         generateTask?.cancel()
         generateTask = Task {
             defer { isGenerating = false }
+            #if DEBUG
+            if let injected = ScreenshotHooks.image(at: ScreenshotHooks.injectImageURL) {
+                try? await Task.sleep(nanoseconds: ScreenshotHooks.injectedResultDelay)
+                appendGeneratedImage(injected)
+                return
+            }
+            #endif
             do {
                 if !sdBackend.isLoaded {
                     guard let model = selectedModel else {
@@ -7083,17 +7292,24 @@ struct ImageGeneratorScreen: View {
                     denoiseStrength: denoiseStrength
                 )
                 if let img {
-                    let oldCount = generatedImages.count
-                    generatedImages.append(img)
-                    if currentPage >= oldCount {
-                        currentPage = generatedImages.count - 1
-                    }
+                    appendGeneratedImage(img)
+                    #if DEBUG
+                    ScreenshotHooks.saveOutput(img, as: "image.png")
+                    #endif
                 }
             } catch is CancellationError {
                 // ignore
             } catch {
                 errorMessage = error.localizedDescription
             }
+        }
+    }
+
+    private func appendGeneratedImage(_ img: UIImage) {
+        let oldCount = generatedImages.count
+        generatedImages.append(img)
+        if currentPage >= oldCount {
+            currentPage = generatedImages.count - 1
         }
     }
 
@@ -7135,8 +7351,10 @@ private struct ImageGeneratorSettingsSheet: View {
     @Binding var selectedModelId: String
     @Binding var steps: Double
     @Binding var denoiseStrength: Double
+    @Binding var promptText: String
     let isLoaded: Bool
     let isLoading: Bool
+    let isGenerating: Bool
     let onLoad: () -> Void
     let onUnload: () -> Void
 
@@ -7169,15 +7387,20 @@ private struct ImageGeneratorSettingsSheet: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14))
 
                     // Steps Slider
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("\(settings.localized("image_generator_iterations")): \(Int(steps))")
-                            .font(.headline)
-                        Slider(value: $steps, in: 1...50, step: 1)
-                            .tint(ApolloPalette.accentStrong)
-                    }
+                    ImageGenerationSettingsSlider(
+                        title: "\(settings.localized("image_generator_iterations")): \(Int(steps))",
+                        value: $steps, range: 1...50, step: 1,
+                        identifier: "imageGenerator.steps"
+                    )
                     .padding()
                     .background(.regularMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
+
+                    ImageExtrasEditor(prompt: $promptText)
+                        .disabled(isGenerating || isLoading)
+                        .padding()
+                        .background(.regularMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
 
                     // Load / Unload
                     VStack(spacing: 12) {
@@ -7258,6 +7481,8 @@ public struct MusicGeneratorScreen: View {
     @State private var isGenerating: Bool = false
     @State private var generationStartedAt: Date?
     @State private var generatedTracks: [GeneratedMusicTrack] = []
+    @State private var isLandscape = false
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var durationSeconds: Double = 10.0
     @AppStorage("feature_music_live_generation") private var liveGeneration: Bool = false
     @AppStorage("feature_music_unlimited_duration") private var unlimitedDuration: Bool = false
@@ -7300,9 +7525,18 @@ public struct MusicGeneratorScreen: View {
         return await musicBackend.loadModel(modelName: selectedModelName)
     }
 
+    /// Screenshot automation (Debug only): show an injected audio file as the result.
+    private var isInjectingResult: Bool {
+        #if DEBUG
+        return ScreenshotHooks.injectMusicURL != nil
+        #else
+        return false
+        #endif
+    }
+
     public var body: some View {
         Group {
-            if selectedModelName.isEmpty {
+            if selectedModelName.isEmpty && !isInjectingResult {
                 VStack(spacing: 16) {
                     Image(systemName: "music.note")
                         .font(.system(size: 48, weight: .semibold))
@@ -7337,134 +7571,59 @@ public struct MusicGeneratorScreen: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 VStack(spacing: 0) {
-                    ScrollViewReader { scrollProxy in
-                        ScrollView {
-                            VStack(spacing: 14) {
-                            // Prompt Input Card
-                            promptInputCard
-
-                            // Duration Controls
-                            if !liveGeneration || !unlimitedDuration {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    HStack {
-                                        Text(settings.localized("music_duration_label"))
-                                            .font(.subheadline)
-                                        Spacer()
-                                        Text("\(Int(durationSeconds))s")
-                                            .font(.subheadline)
-                                            .bold()
-                                            .foregroundStyle(ApolloPalette.accentStrong)
-                                    }
-                                    Slider(value: $durationSeconds, in: 1...600, step: 1)
-                                        .tint(ApolloPalette.accentStrong)
+                    if isLandscape && verticalSizeClass == .compact {
+                        // Short landscape screens (iPhone, folded iPhone Duo): inputs and
+                        // the action button lead, tracks trail, so the tracks stay visible.
+                        // Taller screens keep the single scrolling column.
+                        ApolloHingeSplit(alignment: .top, spacing: 0) {
+                            VStack(spacing: 12) {
+                                ScrollView {
+                                    musicInputs(includesDuration: false)
+                                        .padding([.horizontal, .top])
                                 }
-                                .padding(.horizontal)
-                                .padding(.vertical, 12)
-                                .background(.ultraThinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(Color.white.opacity(0.14), lineWidth: 1)
-                                )
-
+                                musicFooter
                             }
-
-                            if let errorMessage {
-                                Text(errorMessage)
-                                    .foregroundColor(.red)
-                                    .font(.caption)
-                                    .padding(.horizontal)
-                            }
-
-                            ForEach(generatedTracks) { track in
-                                VStack(spacing: 14) {
-                                    HStack {
-                                        Image(systemName: "waveform.circle.fill")
-                                            .font(.title2)
-                                            .foregroundStyle(ApolloPalette.accentStrong)
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(track.prompt)
-                                                .font(.subheadline)
-                                                .bold()
-                                                .lineLimit(1)
-                                            Text("\(track.requestedDurationSeconds)s Audio Clip")
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        Spacer()
-                                        ShareLink(item: track.url) {
-                                            Image(systemName: "square.and.arrow.down")
-                                                .font(.system(size: 16, weight: .semibold))
-                                                .frame(width: 40, height: 40)
-                                        }
-                                        .featureActionIconButtonStyle()
-                                        .accessibilityLabel(settings.localized("save"))
-                                        AudioPlaybackButton(url: track.url)
+                        } trailing: {
+                            // The duration slider sits at the bottom of this column, level
+                            // with the action button, so the leading column fits the
+                            // prompt and button without scrolling.
+                            VStack(spacing: 12) {
+                                ScrollViewReader { scrollProxy in
+                                    ScrollView {
+                                        musicTracks
+                                            .padding([.horizontal, .top])
                                     }
+                                    .onChange(of: generatedTracks.count) { _, _ in
+                                        if let latest = generatedTracks.last {
+                                            withAnimation { scrollProxy.scrollTo(latest.id, anchor: .bottom) }
+                                        }
+                                    }
+                                }
+                                durationControls
+                                    .padding(.horizontal)
+                                    .padding(.bottom, 8)
+                            }
+                        }
+                    } else {
+                        ScrollViewReader { scrollProxy in
+                            ScrollView {
+                                VStack(spacing: 14) {
+                                    musicInputs()
+                                    musicTracks
                                 }
                                 .padding()
-                                .background(.ultraThinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(Color.white.opacity(0.14), lineWidth: 1)
-                                )
-                                .id(track.id)
                             }
-                            }
-                            .padding()
-                        }
-                        .onChange(of: generatedTracks.count) { _, _ in
-                            if let latest = generatedTracks.last {
-                                withAnimation { scrollProxy.scrollTo(latest.id, anchor: .bottom) }
-                            }
-                        }
-                    }
-
-                    if isGenerating && !(liveGeneration && unlimitedDuration) {
-                        ProgressView(value: musicBackend.progress)
-                            .tint(ApolloPalette.accentStrong)
-                            .padding(.horizontal)
-                            .padding(.bottom, 10)
-                    }
-
-                    Button {
-                        if isGenerating {
-                            musicBackend.stopLiveGeneration()
-                        } else {
-                            generateMusic()
-                        }
-                    } label: {
-                        HStack(spacing: 8) {
-                            if isLoading {
-                                ProgressView()
-                                    .tint(.white)
-                                    .scaleEffect(0.85)
-                            } else {
-                                Image(systemName: isGenerating ? "stop.fill" : "sparkles")
-                                    .font(.system(size: 13, weight: .bold))
-                            }
-                            if isGenerating {
-                                TimelineView(.periodic(from: .now, by: 1)) { context in
-                                    let elapsed = max(0, Int(context.date.timeIntervalSince(generationStartedAt ?? context.date)))
-                                    Text("\(settings.localized("music_stop_generation")) · \(String(format: "%02d:%02d", elapsed / 60, elapsed % 60))")
-                                        .monospacedDigit()
-                                        .lineLimit(1)
+                            .onChange(of: generatedTracks.count) { _, _ in
+                                if let latest = generatedTracks.last {
+                                    withAnimation { scrollProxy.scrollTo(latest.id, anchor: .bottom) }
                                 }
-                            } else {
-                                Text(settings.localized(isLoading ? "model_loading" : "generate_music"))
-                                    .lineLimit(1)
                             }
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
+
+                        musicFooter
                     }
-                    .foregroundStyle(.white)
-                    .liquidGlassPrimaryButton(cornerRadius: 12)
-                    .disabled(isLoading || (!isGenerating && prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty))
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
                 }
+                .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: { isLandscape = $0 }
             }
         }
         .navigationTitle(settings.localized("feature_music_generator"))
@@ -7474,12 +7633,13 @@ public struct MusicGeneratorScreen: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
-                    musicBackend.unloadModel()
+                    musicBackend.unloadModel(reason: "music-back-button")
                     onNavigateBack?()
                 } label: {
                     Image(systemName: "arrow.left")
                 }
                 .tint(.white)
+                .accessibilityIdentifier("nav_back_button")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
@@ -7489,6 +7649,7 @@ public struct MusicGeneratorScreen: View {
                 }
                 .disabled(isGenerating || isLoading)
                 .tint(.white)
+                .accessibilityIdentifier("feature_settings_button")
             }
         }
         .apolloSheet(isPresented: $showSettings) {
@@ -7511,13 +7672,33 @@ public struct MusicGeneratorScreen: View {
                     defer { isLoading = false }
                     _ = await ensureModelLoaded(force: true)
                 },
-                onUnload: { musicBackend.unloadModel() },
+                onUnload: { musicBackend.unloadModel(reason: "music-settings-unload") },
                 showsThinkingToggle: false,
                 extraModelConfigsContent: AnyView(musicGenerationSettings)
             )
             .environmentObject(settings)
         }
+        #if DEBUG
+        .task {
+            guard ScreenshotHooks.autotest == "music" else { return }
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            ScreenshotHooks.autotestLog("generating with \(selectedModelName), prompt: \(prompt)")
+            generateMusic()
+        }
+        .onChange(of: errorMessage) { _, message in
+            if ScreenshotHooks.autotest == "music", let message { ScreenshotHooks.autotestLog("music error: \(message)") }
+        }
+        .onChange(of: generatedTracks.count) { _, count in
+            guard ScreenshotHooks.autotest == "music", let track = generatedTracks.last else { return }
+            let bytes = (try? FileManager.default.attributesOfItem(atPath: track.url.path)[.size] as? Int) ?? 0
+            ScreenshotHooks.autotestLog("music tracks: \(count), last \(track.url.lastPathComponent) \(bytes) bytes")
+        }
+        #endif
         .onAppear {
+            #if DEBUG
+            // Screenshot automation: prefill the prompt.
+            if prompt.isEmpty, let text = ScreenshotHooks.musicPrompt { prompt = text }
+            #endif
             Task {
                 await refreshDownloadedModelStatus()
                 let available = downloadableFeatureModels().filter(isMusicGenerationFeatureModel)
@@ -7527,12 +7708,22 @@ public struct MusicGeneratorScreen: View {
             }
         }
         .onDisappear {
-            musicBackend.unloadModel()
+            if UIApplication.shared.applicationState == .active {
+                musicBackend.unloadModel(reason: "music-screen-disappeared-active")
+            }
         }
     }
 
     private var musicGenerationSettings: some View {
         VStack(spacing: 8) {
+            if musicBackend.supportsLockedScreenGeneration {
+                Text(settings.localized("music_locked_screen_supported"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             Toggle(settings.localized("music_live_generation"), isOn: $liveGeneration)
                 .tint(ApolloPalette.accentStrong)
                 .foregroundColor(.white)
@@ -7564,6 +7755,143 @@ public struct MusicGeneratorScreen: View {
         }
     }
 
+    /// Prompt, duration, and error. With `includesDuration` false (the two-column
+    /// layout), the duration slider moves to the tracks column instead.
+    private func musicInputs(includesDuration: Bool = true) -> some View {
+        VStack(spacing: 14) {
+            // Prompt Input Card
+            promptInputCard
+
+            if includesDuration {
+                durationControls
+            }
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .font(.caption)
+                    .padding(.horizontal)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var durationControls: some View {
+        if !liveGeneration || !unlimitedDuration {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text(settings.localized("music_duration_label"))
+                        .font(.subheadline)
+                    Spacer()
+                    Text("\(Int(durationSeconds))s")
+                        .font(.subheadline)
+                        .bold()
+                        .foregroundStyle(ApolloPalette.accentStrong)
+                }
+                Slider(value: $durationSeconds, in: 1...600, step: 1)
+                    .tint(ApolloPalette.accentStrong)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.14), lineWidth: 1)
+            )
+        }
+    }
+
+    private var musicTracks: some View {
+        VStack(spacing: 14) {
+            ForEach(generatedTracks) { track in
+                VStack(spacing: 14) {
+                    HStack {
+                        Image(systemName: "waveform.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(ApolloPalette.accentStrong)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(track.prompt)
+                                .font(.subheadline)
+                                .bold()
+                                .lineLimit(1)
+                            Text("\(track.requestedDurationSeconds)s Audio Clip")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        ShareLink(item: track.url) {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(width: 40, height: 40)
+                        }
+                        .featureActionIconButtonStyle()
+                        .accessibilityLabel(settings.localized("save"))
+                        AudioPlaybackButton(url: track.url, allowsBackgroundPlayback: true)
+                    }
+                }
+                .padding()
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.14), lineWidth: 1)
+                )
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("music_track")
+                .id(track.id)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var musicFooter: some View {
+        if isGenerating && !(liveGeneration && unlimitedDuration) {
+            ProgressView(value: musicBackend.progress)
+                .tint(ApolloPalette.accentStrong)
+                .padding(.horizontal)
+                .padding(.bottom, 10)
+        }
+
+        Button {
+            if isGenerating {
+                musicBackend.stopLiveGeneration()
+            } else {
+                generateMusic()
+            }
+        } label: {
+            HStack(spacing: 8) {
+                if isLoading {
+                    ProgressView()
+                        .tint(.white)
+                        .scaleEffect(0.85)
+                } else {
+                    Image(systemName: isGenerating ? "stop.fill" : "sparkles")
+                        .font(.system(size: 13, weight: .bold))
+                }
+                if isGenerating {
+                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                        let elapsed = max(0, Int(context.date.timeIntervalSince(generationStartedAt ?? context.date)))
+                        Text("\(settings.localized("music_stop_generation")) · \(String(format: "%02d:%02d", elapsed / 60, elapsed % 60))")
+                            .monospacedDigit()
+                            .lineLimit(1)
+                    }
+                } else {
+                    Text(settings.localized(isLoading ? "model_loading" : "generate_music"))
+                        .lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+        }
+        .foregroundStyle(.white)
+        .liquidGlassPrimaryButton(cornerRadius: 12)
+        .disabled(isLoading || (!isGenerating && prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty))
+        .accessibilityIdentifier("music_generate_button")
+        .padding(.horizontal)
+        .padding(.bottom, 8)
+    }
+
     @ViewBuilder
     private var promptInputCard: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -7578,6 +7906,8 @@ public struct MusicGeneratorScreen: View {
                         .padding(.vertical, 12)
                 }
                 TextEditor(text: $prompt)
+                    .accessibilityIdentifier("music_prompt")
+                    .screenshotAutocorrectionDisabled()
                     .frame(minHeight: 120)
                     .padding(8)
                     .scrollContentBackground(.hidden)
@@ -7635,6 +7965,33 @@ public struct MusicGeneratorScreen: View {
         let requestedLive = liveGeneration
         let requestedUnlimited = liveGeneration && unlimitedDuration
         let requestedSeed: UInt64? = randomSeed ? nil : UInt64(min(999_999, max(0, musicSeed)))
+        #if DEBUG
+        if let injected = ScreenshotHooks.injectMusicURL {
+            if requestedUnlimited {
+                // Live generation in progress (Duo simulator): a running timer, no audio.
+                generationStartedAt = Date().addingTimeInterval(-24)
+                isGenerating = true
+                errorMessage = nil
+                return
+            }
+            generationStartedAt = Date()
+            isGenerating = true
+            errorMessage = nil
+            Task {
+                try? await Task.sleep(nanoseconds: ScreenshotHooks.injectedResultDelay)
+                let seconds = (try? AVAudioFile(forReading: injected)).map { Double($0.length) / $0.processingFormat.sampleRate }
+                generatedTracks.append(
+                    GeneratedMusicTrack(
+                        prompt: requestedPrompt,
+                        requestedDurationSeconds: Int(ceil(seconds ?? Double(requestedDuration))),
+                        url: injected
+                    )
+                )
+                isGenerating = false
+            }
+            return
+        }
+        #endif
         isLoading = true
         Task {
             if !isCurrentModelLoaded {
@@ -7670,6 +8027,9 @@ public struct MusicGeneratorScreen: View {
                         )
                     )
                     isGenerating = false
+                    #if DEBUG
+                    ScreenshotHooks.saveOutput(copyOf: outputURL, as: "music.\(outputURL.pathExtension.isEmpty ? "wav" : outputURL.pathExtension)")
+                    #endif
                 }
             } else {
                 await MainActor.run {

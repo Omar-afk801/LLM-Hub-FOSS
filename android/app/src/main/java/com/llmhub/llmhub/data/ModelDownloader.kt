@@ -306,6 +306,13 @@ class ModelDownloader(
             return@flow
         }
 
+        // Video Generation bundles (LTX-Video "ltxv_gguf" / "ltxv_qnn"): every file goes into
+        // models/<sanitized name>/ under its original file name, even without additional files.
+        if (model.isVideoGenerationModel()) {
+            downloadGgufMultiFile(model).collect { emit(it) }
+            return@flow
+        }
+
         // Handle Music Generation multi-file models (e.g. SoundGen)
         if (model.category == "music_generation" && model.additionalFiles.isNotEmpty()) {
             downloadGgufMultiFile(model).collect { emit(it) }
@@ -315,6 +322,12 @@ class ModelDownloader(
         // Handle image_generator models specially (multi-file format)
         if (model.modelFormat == "image_generator") {
             downloadImageGeneratorModel(model).collect { emit(it) }
+            return@flow
+        }
+
+        // Per-SoC LiteRT Stable Diffusion builds: plain files into sd_models/<model name>/
+        if (model.modelFormat == "litert_npu") {
+            downloadLiteRtSdModel(model).collect { emit(it) }
             return@flow
         }
 
@@ -431,8 +444,10 @@ class ModelDownloader(
                     raf.seek(downloadedBytes)
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                     while (true) {
+                        kotlinx.coroutines.currentCoroutineContext().ensureActive()
                         val read = input.read(buffer)
                         if (read == -1) break
+                        kotlinx.coroutines.currentCoroutineContext().ensureActive()
                         raf.write(buffer, 0, read)
                         downloadedBytes += read
                         bytesSinceLastEmit += read
@@ -1015,6 +1030,54 @@ class ModelDownloader(
      * Downloads GGUF models with additional files (like mmproj)
      * All files are downloaded to the root models directory.
      */
+    /**
+     * Downloads a LiteRT Stable Diffusion build (the URL plus additionalFiles) into sd_models/<model name>/,
+     * keeping each file's base name, which is what StableDiffusionHelper detects. Partial files resume.
+     */
+    private fun downloadLiteRtSdModel(model: LLMModel): Flow<DownloadStatus> = flow {
+        val modelDir = File(File(context.filesDir, "sd_models"), model.name.replace(" ", "_")).apply { mkdirs() }
+        val urls = listOf(model.url) + model.additionalFiles
+        var completed = urls.sumOf { url -> File(modelDir, url.substringAfterLast("/").substringBefore("?")).length() }
+        var lastEmit = System.currentTimeMillis()
+        var bytesSinceEmit = 0L
+        for (url in urls) {
+            val target = File(modelDir, url.substringAfterLast("/").substringBefore("?"))
+            val existing = target.length()
+            val connection = openConnectionWithAuthRedirects(url, existing.takeIf { it > 0 })
+            try {
+                val code = connection.responseCode
+                if (code == 416) continue // Already complete.
+                if (code !in 200..299) throw RuntimeException("Download failed for ${target.name}: HTTP $code")
+                if (code == 200 && existing > 0) {
+                    // The server ignored the range; start this file again.
+                    completed -= existing
+                    target.delete()
+                }
+                connection.inputStream.use { input ->
+                    java.io.FileOutputStream(target, code == 206).use { output ->
+                        val buffer = ByteArray(1 shl 16)
+                        while (true) {
+                            val read = input.read(buffer)
+                            if (read < 0) break
+                            output.write(buffer, 0, read)
+                            completed += read
+                            bytesSinceEmit += read
+                            val now = System.currentTimeMillis()
+                            if (now - lastEmit >= 500) {
+                                emit(DownloadStatus(completed, model.sizeBytes, bytesSinceEmit * 1000 / (now - lastEmit)))
+                                lastEmit = now
+                                bytesSinceEmit = 0
+                            }
+                        }
+                    }
+                }
+            } finally {
+                connection.disconnect()
+            }
+        }
+        emit(DownloadStatus(model.sizeBytes, model.sizeBytes, 0))
+    }.flowOn(Dispatchers.IO)
+
     private fun downloadGgufMultiFile(model: LLMModel): Flow<DownloadStatus> = flow {
         Log.i(TAG, "Downloading GGUF multi-file model: ${model.name}")
 
@@ -1167,7 +1230,8 @@ class ModelDownloader(
                              val elapsed = currentTime - lastEmitTime
                              if (elapsed > 500) {
                                   val speed = if (elapsed > 0) (bytesSinceLastEmit * 1000 / elapsed) else 0L
-                                  val reportedTotal = if (reportedTotalAcrossFiles > 0) reportedTotalAcrossFiles else model.sizeBytes
+                                  // reportedTotalAcrossFiles only covers files started so far; model.sizeBytes is the whole bundle.
+                                  val reportedTotal = maxOf(reportedTotalAcrossFiles, model.sizeBytes)
                                   emit(DownloadStatus(cumulativeDownloaded, reportedTotal, speed))
                                   lastEmitTime = currentTime
                                   bytesSinceLastEmit = 0L

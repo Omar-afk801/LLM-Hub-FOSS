@@ -11,10 +11,7 @@ struct ContentView: View {
                 SplashScreenView(onFinished: {
                     isShowingSplash = false
                 })
-                .transition(.asymmetric(
-                    insertion: .identity,
-                    removal: .opacity.combined(with: .scale(scale: 0.95))
-                ))
+                .transition(.asymmetric(insertion: .identity, removal: .opacity))
             } else {
                 NavigationStack(path: $path) {
                     HomeScreen(
@@ -176,6 +173,24 @@ struct ContentView: View {
                 }
             }
         }
+        .apolloProvidesWindowWidth()
+        #if DEBUG
+        .task {
+            // Unattended music test (Mac "Designed for iPad"): see ScreenshotHooks.autotest.
+            // Unattended feature test: -screenshot_autotest music|image (-screenshot_autotest_model <name>).
+            let screens: [String: (Screen, String)] = [
+                "music": (.musicGenerator, "Magenta RealTime 2 Small"),
+                "image": (.imageGenerator, "FLUX.1 [schnell] (5-bit)"),
+            ]
+            guard let test = ScreenshotHooks.autotest, let (screen, defaultModel) = screens[test] else { return }
+            let modelName = UserDefaults.standard.string(forKey: "screenshot_autotest_model") ?? defaultModel
+            guard await ScreenshotHooks.ensureModelDownloaded(named: modelName) else { return }
+            isShowingSplash = false
+            path = NavigationPath()
+            path.append(screen)
+            ScreenshotHooks.autotestLog("opened \(test) screen")
+        }
+        #endif
         .onOpenURL { url in
             guard AudioSearchModel.isAudioURL(url) else { return }
             AudioSearchModel.importShared([url])

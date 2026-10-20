@@ -15,6 +15,7 @@ struct VideoGeneratorScreen: View {
     @State private var seed: Int = Int.random(in: 0..<1_000_000)
     @State private var generatedVideoURL: URL?
     @State private var isGenerating = false
+    @State private var isUnfolded = false
     @State private var isSaving = false
     @State private var showSettings = false
     @State private var errorMessage: String?
@@ -44,11 +45,20 @@ struct VideoGeneratorScreen: View {
         return ModelData.isModelFullyAvailableLocally(model)
     }
 
+    /// Screenshot automation (Debug only): show an injected video as the result.
+    private var isInjectingResult: Bool {
+        #if DEBUG
+        return ScreenshotHooks.injectVideoURL != nil
+        #else
+        return false
+        #endif
+    }
+
     var body: some View {
         Group {
-            if availableModels.isEmpty {
+            if availableModels.isEmpty && !isInjectingResult {
                 noModelView
-            } else if !isModelDownloaded {
+            } else if !isModelDownloaded && !isInjectingResult {
                 loadModelView
             } else {
                 mainGenerationView
@@ -65,10 +75,12 @@ struct VideoGeneratorScreen: View {
                     videoBackend.unloadModel()
                     onNavigateBack()
                 } label: { Image(systemName: "arrow.left") }
+                .accessibilityIdentifier("nav_back_button")
             }
-            if !availableModels.isEmpty {
+            if !availableModels.isEmpty || isInjectingResult {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { showSettings = true } label: { Image(systemName: "slider.horizontal.3") }
+                        .accessibilityIdentifier("feature_settings_button")
                 }
             }
         }
@@ -109,6 +121,14 @@ struct VideoGeneratorScreen: View {
             if selectedModelId.isEmpty || !availableModels.contains(where: { $0.id == selectedModelId }) {
                 selectedModelId = availableModels.first?.id ?? ""
             }
+            #if DEBUG
+            // Screenshot automation: prefill the prompt.
+            if promptText.isEmpty, let prompt = ScreenshotHooks.videoPrompt { promptText = prompt }
+            // Input image only (real generation) or together with an injected result.
+            if inputImage == nil, let injected = ScreenshotHooks.image(at: ScreenshotHooks.injectVideoInputURL) ?? ScreenshotHooks.environmentInputImage {
+                inputImage = injected
+            }
+            #endif
         }
         .onDisappear {
             generateTask?.cancel()
@@ -204,10 +224,39 @@ struct VideoGeneratorScreen: View {
     private var mainGenerationView: some View {
         GeometryReader { geo in
             let isLandscape = geo.size.width > geo.size.height
-            if isLandscape && generatedVideoURL != nil {
+            if isLandscape {
                 landscapeLayout
+            } else if isUnfolded, let url = generatedVideoURL {
+                hingePortraitLayout(url: url)
             } else {
                 portraitLayout
+            }
+        }
+        .apolloDetectsUnfoldedHinge($isUnfolded)
+    }
+
+    // MARK: - Hinge Portrait Layout (stacked, divided at the iPhone Duo hinge)
+
+    private func hingePortraitLayout(url: URL) -> some View {
+        ApolloHingeVSplit {
+            ScrollView {
+                generationControls
+                    .padding(.vertical, 12)
+            }
+        } bottom: {
+            videoPlayerCard(url: url)
+                .padding(.bottom, 12)
+        }
+        .padding(.horizontal)
+    }
+
+    private var generationControls: some View {
+        VStack(spacing: 14) {
+            promptCard
+            img2vidCard
+            generateButton
+            if generatedVideoURL != nil {
+                saveButton
             }
         }
     }
@@ -233,23 +282,19 @@ struct VideoGeneratorScreen: View {
     // MARK: - Landscape Layout
 
     private var landscapeLayout: some View {
-        HStack(spacing: 14) {
+        ApolloHingeSplit {
             ScrollView {
-                VStack(spacing: 14) {
-                    promptCard
-                    img2vidCard
-                    generateButton
-                    if generatedVideoURL != nil {
-                        saveButton
-                    }
-                }
-                .padding(.vertical, 12)
+                generationControls
+                    .padding(.vertical, 12)
             }
-            .frame(maxWidth: .infinity)
-
+        } trailing: {
+            // Landscape always uses two columns; the output side waits empty until
+            // a video exists.
             if let url = generatedVideoURL {
                 videoPlayerCard(url: url)
-                    .frame(maxWidth: .infinity)
+            } else {
+                ApolloOutputPlaceholder(systemImage: "film")
+                    .padding(.vertical, 12)
             }
         }
         .padding(.horizontal)
@@ -262,6 +307,8 @@ struct VideoGeneratorScreen: View {
             Text(settings.localized("video_generator_prompt_label"))
                 .font(.headline)
             TextEditor(text: $promptText)
+                .accessibilityIdentifier("video_prompt")
+                .screenshotAutocorrectionDisabled()
                 .focused($promptFocused)
                 .frame(minHeight: 100)
                 .scrollContentBackground(.hidden)
@@ -314,6 +361,7 @@ struct VideoGeneratorScreen: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.18), lineWidth: 1))
                 .disabled(isGenerating)
+                .accessibilityIdentifier("video_input_picker")
 
                 if let thumb = inputImage {
                     ZStack(alignment: .topTrailing) {
@@ -353,6 +401,8 @@ struct VideoGeneratorScreen: View {
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.14), lineWidth: 1))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("video_result")
     }
 
     // MARK: - Generate Button
@@ -391,6 +441,7 @@ struct VideoGeneratorScreen: View {
         .foregroundStyle(.white)
         .liquidGlassPrimaryButton(cornerRadius: 12)
         .disabled(!isGenerating && (promptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || (inputImage == nil && selectedModel?.supportsPromptOnlyVideoGeneration != true)))
+        .accessibilityIdentifier("video_generate_button")
     }
 
     private var saveButton: some View {
@@ -439,6 +490,14 @@ struct VideoGeneratorScreen: View {
 
         generateTask?.cancel()
         generateTask = Task {
+            #if DEBUG
+            if let injected = ScreenshotHooks.injectVideoURL {
+                try? await Task.sleep(nanoseconds: ScreenshotHooks.injectedResultDelay)
+                generatedVideoURL = injected
+                isGenerating = false
+                return
+            }
+            #endif
             do {
                 guard let model = selectedModel else {
                     errorMessage = settings.localized("video_generator_no_model")
@@ -456,6 +515,10 @@ struct VideoGeneratorScreen: View {
                     motionStrength: strength
                 )
                 generatedVideoURL = url
+                #if DEBUG
+                ScreenshotHooks.saveOutput(copyOf: url, as: "video.\(url.pathExtension.isEmpty ? "mp4" : url.pathExtension)")
+                ScreenshotHooks.saveOutput(startingImage, as: "video_input.png")
+                #endif
             } catch is CancellationError {
                 // ignore
             } catch {

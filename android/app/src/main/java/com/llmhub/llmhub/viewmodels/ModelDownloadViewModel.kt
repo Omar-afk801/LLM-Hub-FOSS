@@ -1,5 +1,7 @@
 package com.llmhub.llmhub.viewmodels
 
+import kotlinx.coroutines.flow.retryWhen
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.llmhub.llmhub.data.LLMModel
@@ -27,6 +29,8 @@ import android.content.Context
 import com.llmhub.llmhub.BuildConfig
 import com.llmhub.llmhub.data.isModelFileValid
 import com.llmhub.llmhub.data.hasCompleteDownloadedBundle
+import com.llmhub.llmhub.data.isVideoGenerationModel
+import com.llmhub.llmhub.data.bundleDirectory
 import com.google.gson.Gson
 import android.net.Uri
 import com.google.gson.JsonParser
@@ -113,11 +117,35 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
         
         loadModels()
         loadImportedModels()
+        viewModelScope.launch {
+            var previous = emptyMap<String, LLMModel>()
+            com.llmhub.llmhub.service.ModelDownloadService.downloadStates.collect { snapshots ->
+                snapshots.forEach { (name, snapshot) ->
+                    if (!com.llmhub.llmhub.service.ModelDownloadService.isDownloading(name) &&
+                        previous[name]?.isDownloading != true) return@forEach
+                    updateModel(name) { it.copy(
+                        isDownloaded = snapshot.isDownloaded, isDownloading = snapshot.isDownloading,
+                        isPaused = snapshot.isPaused, isExtracting = snapshot.isExtracting,
+                        downloadProgress = snapshot.downloadProgress, downloadedBytes = snapshot.downloadedBytes,
+                        totalBytes = snapshot.totalBytes, downloadSpeedBytesPerSec = snapshot.downloadSpeedBytesPerSec
+                    ) }
+                }
+                previous = snapshots
+            }
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
-        ktorClient.close()
+        val pending = downloadJobs.values.toList()
+        if (pending.none { !it.isCompleted }) {
+            ktorClient.close()
+        } else {
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                pending.forEach { it.join() }
+                ktorClient.close()
+            }
+        }
     }
 
     fun setHuggingFaceToken(token: String?) {
@@ -258,6 +286,17 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                     model.copy(isDownloaded = false, isDownloading = false, downloadProgress = progress, downloadedBytes = partialBytes, totalBytes = model.sizeBytes)
                 }
             }
+            // Per-SoC LiteRT Stable Diffusion builds: plain files in sd_models/<model name>/
+            else if (model.modelFormat == "litert_npu") {
+                val (bytes, complete) = liteRtSdState(model)
+                model.copy(
+                    isDownloaded = complete,
+                    isDownloading = false,
+                    downloadProgress = if (complete) 1f else if (model.sizeBytes > 0) (bytes.toFloat() / model.sizeBytes).coerceIn(0f, 0.999f) else 0f,
+                    downloadedBytes = if (complete) model.sizeBytes else bytes,
+                    totalBytes = model.sizeBytes
+                )
+            }
             // Handle image_generator models specially (multi-file format)
             else if (model.modelFormat == "image_generator") {
                 val imageGenDir = File(context.filesDir, "image_generator/bins")
@@ -365,8 +404,9 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                 } else {
                     model.copy(isDownloaded = false, isDownloading = false, downloadProgress = 0f, downloadedBytes = 0, totalBytes = model.sizeBytes)
                 }
-            } else if ((model.modelFormat == "gguf" || model.modelFormat == "tflite") && model.additionalFiles.isNotEmpty()) {
-                // GGUF or TFLite models with additional files
+            } else if (((model.modelFormat == "gguf" || model.modelFormat == "tflite") && model.additionalFiles.isNotEmpty()) ||
+                model.isVideoGenerationModel()) {
+                // GGUF or TFLite models with additional files, and video generation bundles (ltxv_gguf / ltxv_qnn)
                 val modelDirName = model.name.replace(" ", "_").replace(Regex("[^a-zA-Z0-9_.-]"), "")
                 val modelDir = File(modelsDir, modelDirName)
                 if (!modelDir.exists()) modelDir.mkdirs()
@@ -567,6 +607,14 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
      * @param baseDir The base directory to search (e.g., sd_models)
      * @param modelType "qnn" for QNN models (unet.bin) or "mnn" for MNN models (unet.mnn)
      */
+    /** Bytes present for a LiteRT SD build and whether every expected file is complete. */
+    private fun liteRtSdState(model: LLMModel): Pair<Long, Boolean> {
+        val dir = File(File(context.filesDir, "sd_models"), model.name.replace(" ", "_"))
+        val bytes = dir.listFiles()?.filter { it.isFile }?.sumOf { it.length() } ?: 0L
+        val allFiles = com.llmhub.llmhub.imagegen.StableDiffusionHelper.LITERT_FILES.all { File(dir, it).length() > 0 }
+        return bytes to (allFiles && bytes >= model.sizeBytes)
+    }
+
     private fun checkSdModelExists(baseDir: File, modelType: String): Boolean {
         if (!baseDir.exists() || !baseDir.isDirectory) return false
 
@@ -597,7 +645,10 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
     fun downloadModel(model: LLMModel) {
         val modelsDir = File(context.filesDir, "models")
         val existingFile = File(modelsDir, model.localFileName())
-        val startingBytes = if (existingFile.exists()) existingFile.length() else 0L
+        val startingBytes = if (model.isVideoGenerationModel()) {
+            // Multi-file video bundles resume from the files already in their directory
+            model.bundleDirectory(context).listFiles()?.filter { it.isFile }?.sumOf { it.length() } ?: 0L
+        } else if (existingFile.exists()) existingFile.length() else 0L
         val total = if (model.sizeBytes > 0) model.sizeBytes else model.totalBytes ?: 0L
 
         android.util.Log.d("ModelDownloadViewModel", "[downloadModel] Starting download for ${model.name}, file exists: ${existingFile.exists()}, size: $startingBytes, expected: $total")
@@ -624,9 +675,20 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
         modelDownloader = ModelDownloader(ktorClient, context, activeToken)
         android.util.Log.d("ModelDownloadViewModel", "[downloadModel] Using active HF token: ${activeToken?.take(8)}... for model: ${model.name}")
 
-        val job = viewModelScope.launch {
+        _models.value.firstOrNull { it.name == model.name }?.let {
+            com.llmhub.llmhub.service.ModelDownloadService.publishState(it)
+        }
+        val downloader = modelDownloader
+        val job = try { com.llmhub.llmhub.service.ModelDownloadService.launchDownload(context, model.name) {
             var latestStatus: com.llmhub.llmhub.data.DownloadStatus? = null
-            modelDownloader.downloadModel(model)
+            try {
+            downloader.downloadModel(model)
+                .retryWhen { error, attempt ->
+                    if (error is java.io.IOException && attempt < 6) {
+                        kotlinx.coroutines.delay(minOf(30_000L, 1000L shl attempt.toInt()))
+                        true // Each attempt resumes the partial files from disk.
+                    } else false
+                }
                 .catch { exception ->
                     // Handle exceptions with better error reporting
                     val errorMsg = exception.message ?: "Unknown error occurred"
@@ -678,6 +740,21 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                         return@onCompletion
                     }
                     
+                    if (model.modelFormat == "litert_npu") {
+                        val complete = liteRtSdState(model).second && cause == null
+                        updateModel(model.name) {
+                            it.copy(
+                                isDownloaded = complete,
+                                isDownloading = false,
+                                isExtracting = false,
+                                downloadProgress = if (complete) 1f else it.downloadProgress,
+                                downloadedBytes = if (complete) model.sizeBytes else it.downloadedBytes,
+                                totalBytes = model.sizeBytes
+                            )
+                        }
+                        return@onCompletion
+                    }
+
                     // Handle image_generator models specially (multi-file format)
                     if (model.modelFormat == "image_generator") {
                         val imageGenDir = File(context.filesDir, "image_generator/bins")
@@ -802,8 +879,9 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                         return@onCompletion
                     }
                     
-                    // GGUF or TFLite models with additional files
-                    if ((model.modelFormat == "gguf" || model.modelFormat == "tflite") && model.additionalFiles.isNotEmpty()) {
+                    // GGUF or TFLite models with additional files, and video generation bundles (ltxv_gguf / ltxv_qnn)
+                    if (((model.modelFormat == "gguf" || model.modelFormat == "tflite") && model.additionalFiles.isNotEmpty()) ||
+                        model.isVideoGenerationModel()) {
                         val modelsDir = File(context.filesDir, "models")
                         val modelDirName = model.name.replace(" ", "_").replace(Regex("[^a-zA-Z0-9_.-]"), "")
                         val modelDir = File(modelsDir, modelDirName)
@@ -907,6 +985,7 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                     }
                 }
                 .collect { status ->
+                    com.llmhub.llmhub.service.ModelDownloadService.reportProgress(model.name, status)
                     latestStatus = status
                     updateModel(model.name, rateLimit = true) {
                         val progress = if (status.totalBytes > 0) {
@@ -925,7 +1004,24 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                             downloadSpeedBytesPerSec = status.downloadSpeedBytesPerSec
                         )
                     }
+                    _models.value.firstOrNull { it.name == model.name }?.let {
+                        com.llmhub.llmhub.service.ModelDownloadService.publishState(it)
+                    }
                 }
+            } finally {
+                _models.value.firstOrNull { it.name == model.name }?.let {
+                    com.llmhub.llmhub.service.ModelDownloadService.publishState(it)
+                }
+            }
+        }
+
+        } catch (error: Exception) {
+            updateModel(model.name) { it.copy(isDownloading = false, isPaused = true) }
+            _models.value.firstOrNull { it.name == model.name }?.let {
+                com.llmhub.llmhub.service.ModelDownloadService.publishState(it)
+            }
+            viewModelScope.launch { _downloadErrors.emit(model.name to (error.message ?: error.toString())) }
+            return
         }
 
         downloadJobs[model.name] = job
@@ -950,7 +1046,8 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
         if (modelsDir.exists() && modelsDir.isDirectory) {
             try {
                 // Determine if this is a directory-based model (ONNX, WhisperKit, GGUF, or Music Generation multi-file)
-                if ((model.modelFormat == "onnx" || model.modelFormat == "whisperkit" || model.modelFormat == "gguf" || model.category == "music_generation") && model.additionalFiles.isNotEmpty()) {
+                if (((model.modelFormat == "onnx" || model.modelFormat == "whisperkit" || model.modelFormat == "gguf" || model.category == "music_generation") && model.additionalFiles.isNotEmpty()) ||
+                    model.isVideoGenerationModel()) {
                     val modelDirName = model.name.replace(" ", "_").replace(Regex("[^a-zA-Z0-9_.-]"), "")
                     val modelDir = File(modelsDir, modelDirName)
                     if (modelDir.exists() && modelDir.isDirectory) {
@@ -1015,6 +1112,7 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
     }
 
     fun pauseDownload(model: LLMModel) {
+        com.llmhub.llmhub.service.ModelDownloadService.pauseManaged(model.name)
         downloadJobs[model.name]?.cancel()
         downloadJobs.remove(model.name)
 
@@ -1051,7 +1149,7 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
         
         viewModelScope.launch(Dispatchers.IO) {
             // Handle Stable Diffusion models (stored in sd_models directory)
-            if (model.modelFormat == "qnn_npu" || model.modelFormat == "mnn_cpu") {
+            if (model.modelFormat == "qnn_npu" || model.modelFormat == "mnn_cpu" || model.modelFormat == "litert_npu") {
                 val sdModelsDir = File(context.filesDir, "sd_models")
                 val modelTargetDir = File(sdModelsDir, model.name.replace(" ", "_"))
 
@@ -1074,10 +1172,10 @@ class ModelDownloadViewModel(application: Application) : AndroidViewModel(applic
                 val modelsDir = File(context.filesDir, "models")
 
                 // Delete subdirectory for multi-file formats (onnx, whisperkit, gguf, or music_generation with additionalFiles)
-                if ((model.modelFormat == "onnx" || model.modelFormat == "whisperkit" ||
+                if (((model.modelFormat == "onnx" || model.modelFormat == "whisperkit" ||
                             (model.modelFormat == "gguf" && model.additionalFiles.isNotEmpty()) ||
                             (model.category == "music_generation" && model.additionalFiles.isNotEmpty())) &&
-                    model.additionalFiles.isNotEmpty()) {
+                    model.additionalFiles.isNotEmpty()) || model.isVideoGenerationModel()) {
                     val modelDirName = model.name.replace(" ", "_").replace(Regex("[^a-zA-Z0-9_.-]"), "")
                     val modelSubDir = File(modelsDir, modelDirName)
                     if (modelSubDir.exists() && modelSubDir.isDirectory) {

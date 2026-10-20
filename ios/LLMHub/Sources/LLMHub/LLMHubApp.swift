@@ -3,9 +3,43 @@ import SwiftUI
 import UIKit
 import ModelZoo
 
+final class LLMHubAppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String,
+                     completionHandler: @escaping () -> Void) {
+        guard identifier == BackgroundModelTransfers.identifier else { completionHandler(); return }
+        var finishing: UIBackgroundTaskIdentifier = .invalid
+        finishing = application.beginBackgroundTask(withName: "Finish model downloads") {
+            if finishing != .invalid { application.endBackgroundTask(finishing); finishing = .invalid }
+        }
+        BackgroundModelTransfers.shared.handleEvents {
+            completionHandler()
+            // The native task queue is already submitted. Allow the model actor
+            // a short finishing window for validation/extraction and auth retries.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
+                if finishing != .invalid { application.endBackgroundTask(finishing); finishing = .invalid }
+            }
+        }
+        // Reattach pending model jobs after a system relaunch, including the
+        // final validation/extraction phase once all native transfers finish.
+        ModelDownloadViewModel.shared.resumePendingDownloads()
+    }
+
+    func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+        // iPhone Duo's folded screen reports one of its landscape poses as upside-down
+        // portrait, so allow every orientation there. Elsewhere keep the Info.plist
+        // sets: all four on iPad, all but upside-down on iPhone.
+        if ApolloDevice.hasHinge || window?.traitCollection.userInterfaceIdiom == .pad {
+            return .all
+        }
+        return .allButUpsideDown
+    }
+}
+
 @main
 struct LLMHubApp: App {
+    @UIApplicationDelegateAdaptor(LLMHubAppDelegate.self) private var appDelegate
     @StateObject private var settings = AppSettings.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         let line = "[LLMHub] App launched\n"
@@ -13,6 +47,9 @@ struct LLMHubApp: App {
             FileHandle.standardError.write(data)
         }
         NSLog("[LLMHub] App launched")
+        #if DEBUG
+        Task { @MainActor in DeviceSelfTests.runFromLaunchArguments() }
+        #endif
         UISwitch.appearance().onTintColor = UIColor(ApolloPalette.accentStrong)
 
         // Register upscaler hashes so EnvWrapper.env.ensure can verify them
@@ -30,6 +67,11 @@ struct LLMHubApp: App {
             await PurchaseManager.shared.loadProduct()
         }
 
+        #if DEBUG
+        // App Store screenshot automation (LLMHubScreenshotUITests); inert unless driven.
+        ScreenshotHooks.installLanguageObservers()
+        ScreenshotHooks.startOutputServerIfRequested()
+        #endif
     }
 
     var body: some Scene {
@@ -38,6 +80,14 @@ struct LLMHubApp: App {
                 .environmentObject(settings)
                 .preferredColorScheme(.dark)
                 .environment(\.locale, settings.selectedLanguage.locale)
+                .onChange(of: scenePhase) { _, phase in
+                    switch phase {
+                    case .active: MusicGeneratorBackend.shared.applicationDidBecomeActive()
+                    case .inactive: MusicGeneratorBackend.shared.applicationWillResignActive()
+                    case .background: MusicGeneratorBackend.shared.applicationDidEnterBackground()
+                    @unknown default: break
+                    }
+                }
                 .ifLet(layoutDirectionOverride) { view, dir in
                     view.environment(\.layoutDirection, dir)
                 }

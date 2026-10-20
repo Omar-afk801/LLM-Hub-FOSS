@@ -14,6 +14,27 @@ object DeviceInfo {
         }
     }
 
+    /** The Tensor G5's PowerVR driver runs ggml's Vulkan graphs but returns noise. */
+    fun isTensorG5(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Build.SOC_MODEL.equals("Tensor G5", ignoreCase = true)
+
+    /** Snapdragon (Adreno) devices, where ggml's Vulkan backend is not usable. */
+    fun isSnapdragon(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            Build.SOC_MANUFACTURER.contains("qualcomm", ignoreCase = true)
+        ) return true
+        val soc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) Build.SOC_MODEL else ""
+        return listOf(soc, Build.HARDWARE, Build.BOARD).any { identifier ->
+            identifier.startsWith("SM", ignoreCase = true) ||
+                identifier.startsWith("SDM", ignoreCase = true) ||
+                identifier.startsWith("MSM", ignoreCase = true) ||
+                identifier.startsWith("QCS", ignoreCase = true) ||
+                identifier.startsWith("QCM", ignoreCase = true) ||
+                identifier.contains("qcom", ignoreCase = true) ||
+                identifier.contains("qualcomm", ignoreCase = true)
+        }
+    }
+
     private val chipsetModelSuffixes = mapOf(
         "SM8350" to "888",    // Snapdragon 888
         "SM8350P" to "888",   // Snapdragon 888+
@@ -49,6 +70,15 @@ object DeviceInfo {
         "SM8550", "SM8550P", "QCS8550", "QCM8550",
         "SM8650", "SM8650P", "SM8750", "SM8750P",
         "SM8845", "SM8850", "SM8850P",
+    )
+
+    /**
+     * llama.cpp Vulkan crashes on these Adreno 740/750/830/840 SoCs (pipeline creation
+     * failures and driver faults), so GGUF GPU runs always use OpenCL here.
+     */
+    fun isLlamaCppVulkanBlocked(): Boolean = getDeviceSoc() in setOf(
+        "SM8550", "SM8550P", "SM8650", "SM8650P",
+        "SM8750", "SM8750P", "SM8850", "SM8850P",
     )
 
     /**
@@ -5076,7 +5106,7 @@ object ModelData {
             description = "Fast local sound effects and music generation. Pinned to commit e50bf9d. ~1.1 GB download.",
             url = "https://huggingface.co/jegly/audio/resolve/e50bf9dff759c8622371a9c43ede989ea2d04b32/dit_model.tflite",
             category = "music_generation",
-            sizeBytes = 1097863704L,
+            sizeBytes = 1101795872L,
             source = "jegly/audio via HuggingFace",
             supportsVision = false,
             supportsAudio = true,
@@ -5085,7 +5115,9 @@ object ModelData {
             contextWindowSize = 0,
             modelFormat = "tflite",
             additionalFiles = listOf(
-                "https://huggingface.co/jegly/audio/resolve/e50bf9dff759c8622371a9c43ede989ea2d04b32/autoencoder_model.tflite",
+                // The decoder with its two largest dilated convolutions rewritten as undilated ones (same output), which
+                // LiteRT 2.3.0 compiles for the GPU; see timmyboy26/soundgen-quick-litert-gpu.
+                "https://huggingface.co/timmyboy26/soundgen-quick-litert-gpu/resolve/610d2ad5b7058f53da8465b584d042b6ee8ed6f9/autoencoder_model_undilated_1g.tflite",
                 "https://huggingface.co/jegly/audio/resolve/e50bf9dff759c8622371a9c43ede989ea2d04b32/conditioners_float32.tflite",
                 "https://huggingface.co/jegly/audio/resolve/e50bf9dff759c8622371a9c43ede989ea2d04b32/spiece.model"
             )
@@ -5129,6 +5161,194 @@ object ModelData {
             )
         )
     )
+
+    private const val LTXV_GGUF_REPO =
+        "https://huggingface.co/calcuis/ltxv-gguf/resolve/0990265881485e3419312141f6a1974ab2f7a4c6"
+
+    // All files of a video model are downloaded into filesDir/models/<sanitized name>/ with their
+    // original file names (see VideoGenEngine.modelDir). sizeBytes is the sum of every file.
+    val videoGenerationModels = listOf(
+        // Per-file sizes (x-linked-size): ltxv-2b-0.9.8-distilled-q4_0.gguf 1263727104,
+        // t5xxl_fp16-q4_0.gguf 2896123072, ltxv_0.9.5_vae_fp16.safetensors 2493868876
+        LLMModel(
+            name = "LTX-Video 2B 0.9.8 Distilled (Q4_0)",
+            description = "Lightricks LTX-Video 2B distilled for on-device text-to-video and image-to-video. Generates short clips in ~8 denoising steps. Bundles the Q4_0 transformer (1.3 GB), T5-XXL Q4_0 text encoder (2.9 GB) and VAE (2.5 GB). Pinned to commit 0990265. LTXV Open Weights License. ~6.7 GB download.",
+            url = "$LTXV_GGUF_REPO/ltxv-2b-0.9.8-distilled-q4_0.gguf",
+            category = "video_generation",
+            sizeBytes = 6653719052L,
+            source = "Lightricks (GGUF by calcuis)",
+            supportsVision = false,
+            supportsGpu = true,
+            requirements = ModelRequirements(minRamGB = 8, recommendedRamGB = 12),
+            contextWindowSize = 0,
+            modelFormat = "ltxv_gguf",
+            additionalFiles = listOf(
+                "$LTXV_GGUF_REPO/t5xxl_fp16-q4_0.gguf",
+                "$LTXV_GGUF_REPO/ltxv_0.9.5_vae_fp16.safetensors"
+            )
+        ),
+        // Per-file sizes (x-linked-size): ltxv-2b-0.9.8-distilled-q8_0.gguf 2173891072,
+        // t5xxl_fp16-q4_0.gguf 2896123072, ltxv_0.9.5_vae_fp16.safetensors 2493868876
+        LLMModel(
+            name = "LTX-Video 2B 0.9.8 Distilled (Q8_0)",
+            description = "Higher quality Lightricks LTX-Video 2B distilled for on-device text-to-video and image-to-video. Generates short clips in ~8 denoising steps. Bundles the Q8_0 transformer (2.2 GB), T5-XXL Q4_0 text encoder (2.9 GB) and VAE (2.5 GB). Pinned to commit 0990265. LTXV Open Weights License. ~7.6 GB download.",
+            url = "$LTXV_GGUF_REPO/ltxv-2b-0.9.8-distilled-q8_0.gguf",
+            category = "video_generation",
+            sizeBytes = 7563883020L,
+            source = "Lightricks (GGUF by calcuis)",
+            supportsVision = false,
+            supportsGpu = true,
+            requirements = ModelRequirements(minRamGB = 8, recommendedRamGB = 12),
+            contextWindowSize = 0,
+            modelFormat = "ltxv_gguf",
+            additionalFiles = listOf(
+                "$LTXV_GGUF_REPO/t5xxl_fp16-q4_0.gguf",
+                "$LTXV_GGUF_REPO/ltxv_0.9.5_vae_fp16.safetensors"
+            )
+        )
+    ) + ltxvNpuModels()
+
+    // QNN context binaries for the Hexagon NPU, built by android/tools/ltxv_qnn (QAIRT 2.50).
+    private const val LTXV_QNN_REPO =
+        "https://huggingface.co/timmyboy26/LTX-Video-2B-0.9.8-distilled-QNN/resolve/fc8e5ed0f1f2877ab58ab1ee1db262e77a5506f6"
+
+    private const val LTXV_T5_SIZE = 2896123072L
+    private const val LTXV_VAE_GGUF_SIZE = 2493868876L
+    private const val LTXV_QNN_STUB_SIZE = 26911008L
+
+    /**
+     * One NPU build: Hexagon arch folder, the SoCs (Build.SOC_MODEL) it runs on, and exact file
+     * sizes. Context binaries run on any SoC of the same Hexagon arch (QAIRT 2.50 "Supported
+     * Snapdragon devices") whose HTP has FP16, which the transformer's activations need.
+     * qnn-context-binary-generator reports no FP16 for SM8635 (8s Gen 3), SM7675 (7+ Gen 3),
+     * SM6450 (6 Gen 1), SM7475 (7+ Gen 2), SM8735 (8s Gen 4) and SM7750 (7 Gen 4).
+     */
+    private data class LtxvNpuBuild(
+        val chips: String,
+        val arch: String,
+        val socs: Set<String>,
+        val shape: String,
+        val files: List<Pair<String, Long>>
+    )
+
+    // Sizes of the files in tools/ltxv_qnn's hf_upload/ layout (transformer: INT8 weights, VAE: W8A16).
+    // A getter, not a stored property: videoGenerationModels (declared above) reads it while the
+    // object is still initializing.
+    private val ltxvNpuBuilds: List<LtxvNpuBuild> get() = listOf(
+        // SM7450 (7 Gen 1) is v69 too but has 2 MB VTCM; these graphs are compiled for 8 MB.
+        LtxvNpuBuild("Snapdragon 8 Gen 1 and 8+ Gen 1", "v69", setOf("SM8450", "SM8475", "SM8475P"), "512x320x25", listOf(
+            "ltxv_chunk0.bin" to 525525856L, "ltxv_chunk1.bin" to 482893728L, "ltxv_chunk2.bin" to 482860960L,
+            "ltxv_chunk3.bin" to 483357000L, "ltxv_vae_512x320x25.bin" to 634923064L
+        )),
+        // Integer-only graphs (INT8 weights, INT16 activations) for v73 HTPs without FP16, compiled for
+        // 4 MB VTCM (the 8s Gen 4 has 8 MB, the others 4 MB).
+        LtxvNpuBuild("Snapdragon 8s Gen 4, 8s Gen 3, 7+ Gen 3 and 7 Gen 4", "v73-int", setOf(
+            "SM8735", "SM8735P", "SM8635", "SM8635P", "SM7675", "SM7675P", "SM7750", "SM7750P"
+        ), "512x320x25", listOf(
+            "ltxv_chunk0.bin" to 548604864L, "ltxv_chunk1.bin" to 490940416L, "ltxv_chunk2.bin" to 491026432L,
+            "ltxv_chunk3.bin" to 491534840L, "ltxv_vae_512x320x25.bin" to 656114376L
+        )),
+        LtxvNpuBuild("Snapdragon 8 Gen 2", "v73", setOf("SM8550", "SM8550P", "QCS8550", "QCM8550"), "512x320x25", listOf(
+            "ltxv_chunk0.bin" to 532620128L, "ltxv_chunk1.bin" to 489185184L, "ltxv_chunk2.bin" to 489185184L,
+            "ltxv_chunk3.bin" to 490160456L, "ltxv_vae_512x320x25.bin" to 635607096L
+        )),
+        LtxvNpuBuild("Snapdragon 8 Gen 3", "v75", setOf("SM8650", "SM8650P", "QCS8625"), "768x512x25", listOf(
+            "ltxv_chunk0.bin" to 607126368L, "ltxv_chunk1.bin" to 542375840L, "ltxv_chunk2.bin" to 542400416L,
+            "ltxv_chunk3.bin" to 544665928L, "ltxv_vae_768x512x25.bin" to 697722936L
+        )),
+        LtxvNpuBuild("Snapdragon 8 Elite", "v79", setOf("SM8750", "SM8750P"), "768x512x25", listOf(
+            "ltxv_chunk0.bin" to 608211808L, "ltxv_chunk1.bin" to 542859168L, "ltxv_chunk2.bin" to 542863264L,
+            "ltxv_chunk3.bin" to 545222984L, "ltxv_vae_768x512x25.bin" to 683989048L
+        )),
+        LtxvNpuBuild("Snapdragon 8 Elite Gen 5", "v81", setOf("SM8850", "SM8850P"), "768x512x25", listOf(
+            "ltxv_chunk0.bin" to 589058912L, "ltxv_chunk1.bin" to 545005472L, "ltxv_chunk2.bin" to 545009568L,
+            "ltxv_chunk3.bin" to 547479880L, "ltxv_vae_768x512x25.bin" to 712386616L
+        ))
+    )
+
+    // Debug builds only: `adb shell setprop debug.llmhub.soc SM8735` offers another SoC's NPU build,
+    // so a build for a chip without a test device can be run on a compatible one (same Hexagon arch).
+    private fun ltxvSocForMatching(): String {
+        if (com.llmhub.llmhub.BuildConfig.DEBUG) {
+            val forced = runCatching {
+                Class.forName("android.os.SystemProperties").getMethod("get", String::class.java)
+                    .invoke(null, "debug.llmhub.soc") as String
+            }.getOrDefault("")
+            if (forced.isNotBlank()) return forced.uppercase()
+        }
+        return DeviceInfo.getDeviceSoc().uppercase()
+    }
+
+    private fun ltxvNpuModels(): List<LLMModel> {
+        val soc = ltxvSocForMatching()
+        return ltxvNpuBuilds.filter { soc in it.socs }.map { build ->
+            val npuBytes = build.files.sumOf { it.second }
+            val (w, h, f) = build.shape.split("x")
+            LLMModel(
+                name = "LTX-Video 2B 0.9.8 Distilled (NPU ${build.arch})",
+                description = "Lightricks LTX-Video 2B distilled compiled for the Hexagon ${build.arch} NPU (${build.chips}). " +
+                    "${w}x$h, $f frames per clip. Bundles the NPU transformer and VAE decoder " +
+                    "(${"%.1f".format(npuBytes / 1e9)} GB), the T5-XXL Q4_0 text encoder (2.9 GB) and the VAE used for " +
+                    "image-to-video (2.5 GB). Pinned to commit fc8e5ed. LTXV Open Weights License.",
+                url = "$LTXV_QNN_REPO/${build.arch}/${build.files.first().first}",
+                category = "video_generation",
+                sizeBytes = npuBytes + LTXV_QNN_STUB_SIZE + LTXV_T5_SIZE + LTXV_VAE_GGUF_SIZE,
+                source = "Lightricks (QNN build by LLM Hub)",
+                supportsVision = false,
+                supportsGpu = false,
+                requirements = ModelRequirements(minRamGB = 8, recommendedRamGB = 12),
+                contextWindowSize = 0,
+                modelFormat = "ltxv_qnn",
+                additionalFiles = build.files.drop(1).map { "$LTXV_QNN_REPO/${build.arch}/${it.first}" } + listOf(
+                    "$LTXV_QNN_REPO/ltxv_qnn_stub.safetensors",
+                    "$LTXV_GGUF_REPO/t5xxl_fp16-q4_0.gguf",
+                    "$LTXV_GGUF_REPO/ltxv_0.9.5_vae_fp16.safetensors"
+                )
+            )
+        }
+    }
+
+    // Stable Diffusion 1.5 LiteRT builds, AOT-compiled per Google Tensor TPU with the Tensor SDK beta.
+    private const val SD15_LITERT_REPO =
+        "https://huggingface.co/timmyboy26/stable-diffusion-v1-5-LiteRT-NPU/resolve/f71417cd334e9cee78571412782b91a0be1b78e1"
+    private const val SD15_LITERT_TOKENIZER_SIZE = 1059962L + 524619L
+
+    /** One per-SoC build: the Build.SOC_MODEL values it runs on and its (path, size) files. */
+    private data class SdLiteRtNpuBuild(val chip: String, val folder: String, val socs: Set<String>, val files: List<Pair<String, Long>>)
+
+    // A getter: `models` (declared below) reads it while the object is still initializing.
+    private val sdLiteRtNpuBuilds: List<SdLiteRtNpuBuild> get() = listOf(
+        SdLiteRtNpuBuild("Google Tensor G5", "tensor_g5", setOf("TENSOR G5"), listOf(
+            "tensor_g5/diffusion.tflite" to 1811265200L, "tensor_g5/decoder.tflite" to 123913648L, "tensor_g5/clip.tflite" to 129846528L
+        )),
+        SdLiteRtNpuBuild("Google Tensor G6", "tensor_g6", setOf("TENSOR G6"), listOf(
+            "tensor_g6/diffusion.tflite" to 1861651888L, "tensor_g6/decoder.tflite" to 131456176L, "tensor_g6/clip.tflite" to 133277696L
+        ))
+    )
+
+    private fun sdLiteRtNpuModels(): List<LLMModel> {
+        val soc = ltxvSocForMatching()
+        return sdLiteRtNpuBuilds.filter { soc in it.socs }.map { build ->
+            LLMModel(
+                name = "Stable Diffusion 1.5 (NPU ${build.chip.removePrefix("Google ")})",
+                description = "Stable Diffusion 1.5 compiled for the ${build.chip} TPU with LiteRT. 512x512 text-to-image. " +
+                    "FP16 UNet and image decoder, INT8 text encoder. CreativeML OpenRAIL-M license.",
+                url = "$SD15_LITERT_REPO/${build.files.first().first}",
+                category = "image_generation",
+                sizeBytes = build.files.sumOf { it.second } + SD15_LITERT_TOKENIZER_SIZE,
+                source = "Stable Diffusion v1.5 (LiteRT build by LLM Hub)",
+                supportsVision = false,
+                supportsGpu = false,
+                requirements = ModelRequirements(minRamGB = 8, recommendedRamGB = 12),
+                contextWindowSize = 0,
+                modelFormat = "litert_npu",
+                additionalFiles = build.files.drop(1).map { "$SD15_LITERT_REPO/${it.first}" } + listOf(
+                    "$SD15_LITERT_REPO/tokenizer/vocab.json",
+                    "$SD15_LITERT_REPO/tokenizer/merges.txt"
+                )
+            )
+        }
+    }
 
     private const val EMBEDDING_GEMMA_2_REPO =
         "https://huggingface.co/litert-community/embeddinggemma-2-740m-litert-lm/resolve/24d962e906c7d332c6428e71c9676855024569e2"
@@ -5268,7 +5488,7 @@ object ModelData {
                 model.url.contains("embeddinggemma-2-text-270m_")
             )
 
-    val models: List<LLMModel> = baseModels + embeddingGemma2Models + upscalerModels + ttsModels + musicGenerationModels + (if (DeviceInfo.getChipsetSuffix() in setOf("8gen3", "8gen4", "8gen5")) sdxlModels else emptyList())
+    val models: List<LLMModel> = baseModels + embeddingGemma2Models + upscalerModels + ttsModels + musicGenerationModels + videoGenerationModels + sdLiteRtNpuModels() + (if (DeviceInfo.getChipsetSuffix() in setOf("8gen3", "8gen4", "8gen5")) sdxlModels else emptyList())
 
 
     /**

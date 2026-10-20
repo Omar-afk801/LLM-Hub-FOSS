@@ -478,6 +478,7 @@
     <string name="premium_subtitle">Unlock the full experience</string>
     <string name="premium_feature_vibe_coder">VibeCoder – AI code builder</string>
     <string name="premium_feature_image_gen">Image Generator – on-device AI art</string>
+    <string name="premium_feature_video_gen">Video Generator – text and image to video on-device, NPU-accelerated on Snapdragon</string>
     <string name="premium_feature_creaitors">creAItors – generate AI companions</string>
     <string name="premium_feature_vibevoice">VibeVoice – hands-free AI voice chat</string>
     <string name="premium_feature_tts">Text-to-Speech auto readout</string>
@@ -654,6 +655,7 @@
     <string name="image_generator_download_model_desc">Download Absolute Reality (NPU or CPU) model from the Models screen to start creating images</string>
     <string name="image_generator_model_not_available">Image generation model not available</string>
     <string name="image_generator_error">Failed to generate image</string>
+    <string name="image_generator_npu_crashed">This device\'s NPU stopped while generating. Try again after a system update, or use another model.</string>
     <string name="image_generation_models">Image Generation Models</string>
     <string name="image_generation_models_description">Stable Diffusion models for text-to-image generation</string>
     <string name="image_generator_success">Image generated successfully</string>
@@ -1041,6 +1043,7 @@
     <string name="media_search_download_model_desc">This feature runs EmbeddingGemma 2 on your device. Download it from the model list to get started.</string>
     <string name="media_search_loading_model">Loading EmbeddingGemma 2…</string>
     <string name="media_search_model_failed">Couldn\'t load EmbeddingGemma 2</string>
+    <string name="media_search_npu_unavailable">This device\'s NPU can\'t run this model. Download the standard EmbeddingGemma 2 instead.</string>
     <string name="media_search_analyzing">Analyzing…</string>
     <string name="media_search_paused">Analysis paused</string>
     <string name="media_search_progress">%1$d of %2$d analyzed (%3$d%%)</string>
@@ -1126,4 +1129,70 @@
     <string name="vibe_codex_saved_verified">Saved %1$s and verified its contents.</string>
     <string name="tts_voice_name">Voice name</string>
     <string name="tts_voice_rename_failed">Could not rename this voice. Please try again.</string>
+    <!-- Video Generator -->
+    <string name="feature_video_generator">Video Generator</string>
+    <string name="feature_video_generator_desc">Create short videos from text or images on-device</string>
+    <string name="video_generation_models">Video Generation Models</string>
+    <string name="video_generation_models_description">On-device LTX-Video models for text-to-video and image-to-video. Large downloads; 8 GB of RAM or more is required.</string>
+    <string name="video_generator_download_model">Please download a video generation model</string>
+    <string name="video_generator_download_model_desc">Download an LTX-Video model from the Models screen to start creating videos from text or images.</string>
+    <string name="video_generator_load_model_title">Load a Video Model</string>
+    <string name="video_generator_load_model_desc">Open settings, choose a downloaded video model and backend, then tap Load Model.</string>
+    <string name="video_generator_prompt_label">Video Description</string>
+    <string name="video_generator_prompt_hint">Describe the scene and the motion you want to see...</string>
+    <string name="video_generator_prompt_tip">Tip: detailed prompts work best. Describe the subject, the action, the camera movement, the lighting and the style in 2–4 sentences.</string>
+    <string name="video_generator_image_to_video">Image to video</string>
+    <string name="video_generator_image_to_video_desc">Animate a start image instead of generating from text alone</string>
+    <string name="video_generator_select_image">Select Start Image</string>
+    <string name="video_generator_change_image">Change Start Image</string>
+    <string name="video_generator_input_image">Start image</string>
+    <string name="video_generator_image_load_failed">Could not load the selected image</string>
+    <string name="video_generator_generate">Generate Video</string>
+    <string name="video_generator_generating">Generating video...</string>
+    <string name="video_generator_result_title">Generated Video</string>
+    <string name="video_generator_result_info">%1$d frames at %2$d fps, generated in %3$s s</string>
+    <string name="video_generator_save">Save Video</string>
+    <string name="video_generator_saved">Video saved to gallery</string>
+    <string name="video_generator_save_failed">Failed to save video</string>
+    <string name="video_generator_share">Share</string>
+    <string name="video_generator_stage_loading">Loading model...</string>
+    <string name="video_generator_stage_encoding">Encoding prompt...</string>
+    <string name="video_generator_stage_denoising">Denoising step %1$d of %2$d</string>
+    <string name="video_generator_stage_decoding">Decoding frames...</string>
+    <string name="video_generator_stage_writing">Writing video...</string>
+    <string name="video_generator_cancelled">Generation cancelled</string>
+    <string name="video_generator_load_failed">Failed to load video model: %1$s</string>
+    <string name="video_generator_generate_failed">Video generation failed: %1$s</string>
+    <string name="video_generator_backend_npu">NPU (Qualcomm Hexagon)</string>
+    <string name="video_generator_backend_gpu">GPU (Vulkan)</string>
+    <string name="video_generator_loaded_status">Loaded: %1$s on %2$s</string>
+    <string name="video_generator_steps">Steps</string>
+    <string name="video_generator_width">Width</string>
+    <string name="video_generator_height">Height</string>
+    <string name="video_generator_frames">Frames</string>
+    <string name="video_generator_duration">About %1$.1f seconds</string>
+    <string name="video_generator_npu_fixed_size">NPU models use a fixed size: %1$d×%2$d, %3$d frames.</string>
+    <string name="video_generator_fps">Frame rate (fps)</string>
+    <string name="video_generator_seed">Seed</string>
+    <string name="video_generator_random_seed">Random seed</string>
+    <string name="video_generator_negative_prompt">Negative prompt (optional)</string>
+    <string name="video_generator_negative_prompt_hint">Things to avoid, e.g. blurry, distorted, low quality</string>
+
+    <!-- Image generation modifiers -->
+    <string name="image_extras_title">Image modifiers</string>
+    <string name="image_extras_negative">Negative prompt</string>
+    <string name="image_extras_guidance">Guidance scale</string>
+    <string name="image_extras_clip_skip">CLIP skip</string>
+    <string name="image_extras_weight">Weight</string>
+    <string name="image_extras_text_encoder">Text encoder</string>
+    <string name="image_extras_embedding">Textual inversion</string>
+    <string name="image_extras_tags">Tag list</string>
+    <string name="image_extras_definitions">Definitions</string>
+    <string name="image_extras_translations">Translation list</string>
+    <string name="image_extras_checkpoint">Base checkpoint</string>
+    <string name="image_extras_invalid">The selected file is invalid or incompatible with the model.</string>
+    <string name="image_extras_resource_hint">Tags: one per line or a JSON array. Definitions/translations: a JSON object or key=value. Tap tags/definitions; translations apply locally.</string>
+    <string name="image_extras_ios_help">LoRA: SafeTensors or Draw Things .ckpt. Encoders/VAE: compatible Draw Things .ckpt. Embeddings: SafeTensors. Select the matching model first.</string>
+    <string name="image_extras_android_help">LoRA, CLIP skip and encoder overrides require an imported GGUF/SafeTensors checkpoint. QNN/MNN weights are fixed. LoRA/embeddings: SafeTensors.</string>
+    <string name="image_extras_import_location">Import checkpoints, LoRAs, encoders and prompt lists in %1$s → %2$s.</string>
 </resources>

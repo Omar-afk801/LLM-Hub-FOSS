@@ -24,8 +24,8 @@ android {
         applicationId = "com.llmhub.llmhub"
         minSdk = 27
         targetSdk = 37
-        versionCode = 162
-        versionName = "4.5.1"
+        versionCode = 163
+        versionName = "4.5.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         val hfToken: String = localProperties.getProperty("HF_TOKEN", "")
@@ -287,6 +287,7 @@ configurations.all {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -354,6 +355,9 @@ dependencies {
     // OkHttp for SD backend communication
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
+    // LTX-Video engine (stable-diffusion.cpp + Hexagon NPU runner), libllmhub_sdcpp.so
+    implementation(project(":sdcpp"))
+
     // MediaPipe Tasks (updated to latest as of Oct 2025)
     // NOTE: Version 0.10.29 has slower initial load for multimodal models due to eager
     // vision/audio component initialization. Disable vision/audio when not needed for faster loading.
@@ -373,10 +377,14 @@ dependencies {
     implementation("com.google.ai.edge.litert:litert-npu-runtime-mediatek:2.3.0")
     implementation("com.google.ai.edge.litert:litert-npu-runtime-google-tensor:2.3.0")
 
-    // CompiledModel API used by the local SoundGen text/core/decoder pipeline.
-    // CompiledModel runtime used by SoundGen. Keep this pinned to the latest
-    // tested LiteRT release; 2.1.0 fails while invoking the DiT on Samsung OpenCL.
-    implementation("com.google.ai.edge.litert:litert:2.1.6")
+    // CompiledModel runtime used by SoundGen and the LiteRT Stable Diffusion NPU builds.
+    // Keep it on the version of the litert-npu-runtime dispatch libraries above (older
+    // runtimes reject them as an unsupported dispatch version) and on a release tested
+    // with SoundGen; 2.1.0 fails while invoking the DiT on Samsung OpenCL.
+    implementation("com.google.ai.edge.litert:litert:2.3.0")
+    // From 2.3.0 the GPU accelerator (libLiteRtClGlAccelerator.so) is a separate artifact; without it
+    // CompiledModel's GPU option silently runs on CPU.
+    implementation("com.google.ai.edge.litert:litert-gpu:2.3.0")
 
     // TensorFlow Lite interpreter used by other legacy TFLite features.
     implementation("org.tensorflow:tensorflow-lite:2.17.0")
@@ -424,6 +432,8 @@ dependencies {
     testImplementation("org.json:json:20250107")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.espresso.intents)
+    androidTestImplementation(libs.androidx.uiautomator)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
@@ -534,6 +544,8 @@ val extractLitertQnnLibs = tasks.register<Copy>("extractLitertQnnLibs") {
         include(
             "jni/arm64-v8a/libQnnSystem.so",
             "jni/arm64-v8a/libQnnHtp.so",
+            "jni/arm64-v8a/libQnnHtpV69Skel.so",
+            "jni/arm64-v8a/libQnnHtpV69Stub.so",
             "jni/arm64-v8a/libQnnHtpV73Skel.so",
             "jni/arm64-v8a/libQnnHtpV73Stub.so",
             "jni/arm64-v8a/libQnnHtpV75Skel.so",

@@ -26,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.llmhub.llmhub.R
+import com.llmhub.llmhub.imagegen.ImageExtrasEditor
+import com.llmhub.llmhub.imagegen.ImagePromptResources
 import com.llmhub.llmhub.imagegen.ImageGeneratorHelper
 import com.llmhub.llmhub.imagegen.ModelInfo
 import com.llmhub.llmhub.imagegen.ModelType
@@ -37,6 +39,7 @@ import android.os.Build
 import android.provider.MediaStore
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.llmhub.llmhub.debug.ScreenshotHooks
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalView
@@ -162,7 +165,7 @@ fun ImageGeneratorScreen(
         availableModels = models
         if (models.isNotEmpty()) {
             // Try to select last used model, otherwise first
-            selectedModel = models.find { it.path == lastModelPath } ?: models.first()
+            selectedModel = models.find { it.path == prefs.getString("last_model_path", null) } ?: models.first()
         } else {
             selectedModel = null
             isModelLoaded = false
@@ -229,6 +232,13 @@ fun ImageGeneratorScreen(
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
                 
+                ImagePromptResources(refreshTrigger, promptText) { promptText = it }
+                ImageExtrasEditor(
+                    enabled = !isGenerating && !isModelLoading,
+                    nativeCheckpointSelected = selectedModel?.type == ModelType.SDCPP,
+                    onChanged = { isModelLoaded = false; refreshTrigger++ }
+                )
+
                 // Model Selector Card - matching ModelSelectorCard style
                 Card(
                     shape = RoundedCornerShape(24.dp),
@@ -328,7 +338,7 @@ fun ImageGeneratorScreen(
                             }
                             
                             // GPU Toggle (MNN models only)
-                            if (selectedModel?.type == ModelType.MNN_CPU) {
+                            if (selectedModel?.type != ModelType.QNN_NPU && selectedModel?.type != ModelType.LITERT_NPU) {
                                 Row(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically,
@@ -461,7 +471,7 @@ fun ImageGeneratorScreen(
                             )
                         }
 
-                        if (selectedModel?.type == ModelType.MNN_CPU) {
+                        if (selectedModel?.type != ModelType.QNN_NPU && selectedModel?.type != ModelType.LITERT_NPU) {
                             // Width slider
                             Column {
                                 Text(
@@ -692,8 +702,8 @@ fun ImageGeneratorScreen(
                                     }
                                 }
                                 
-                                // Img2img section
-                                Card(
+                                // Img2img section (LiteRT NPU builds have no image encoder)
+                                if (selectedModel?.type != ModelType.LITERT_NPU) Card(
                                     colors = CardDefaults.cardColors(
                                         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                                     )
@@ -879,8 +889,8 @@ fun ImageGeneratorScreen(
                                     }
                                 }
                                 
-                                // Img2img section
-                                Card(
+                                // Img2img section (LiteRT NPU builds have no image encoder)
+                                if (selectedModel?.type != ModelType.LITERT_NPU) Card(
                                     colors = CardDefaults.cardColors(
                                         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                                     )
@@ -1056,7 +1066,8 @@ fun ImageGeneratorScreen(
                                 // and we don't already have a next image ready
                                 val shouldPrefetch = currentPage < generatedImages.size && 
                                     currentPage == generatedImages.size - 1 && 
-                                    !isGenerating
+                                    !isGenerating &&
+                                    !ScreenshotHooks.autoVariationDisabled() // debug-only screenshot hook
                                 val swipedToPlaceholder = currentPage == generatedImages.size && !isGenerating
                                 
                                 if (shouldPrefetch || swipedToPlaceholder) {
@@ -1249,8 +1260,8 @@ fun ImageGeneratorScreen(
                             }
                         }
                         
-                        // Img2img section
-                        Card(
+                        // Img2img section (LiteRT NPU builds have no image encoder)
+                        if (selectedModel?.type != ModelType.LITERT_NPU) Card(
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                             )
@@ -1402,7 +1413,8 @@ fun ImageGeneratorScreen(
                                         // and we don't already have a next image ready
                                         val shouldPrefetch = currentPage < generatedImages.size && 
                                             currentPage == generatedImages.size - 1 && 
-                                            !isGenerating
+                                            !isGenerating &&
+                                            !ScreenshotHooks.autoVariationDisabled() // debug-only screenshot hook
                                         val swipedToPlaceholder = currentPage == generatedImages.size && !isGenerating
                                         
                                         if (shouldPrefetch || swipedToPlaceholder) {
