@@ -24,8 +24,8 @@ android {
         applicationId = "com.llmhub.llmhub"
         minSdk = 27
         targetSdk = 37
-        versionCode = 163
-        versionName = "4.5.2"
+        versionCode = 169
+        versionName = "4.5.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         val hfToken: String = localProperties.getProperty("HF_TOKEN", "")
@@ -363,12 +363,12 @@ dependencies {
     // vision/audio component initialization. Disable vision/audio when not needed for faster loading.
     // tasks-genai latest: 0.10.29; tasks-text latest: 0.10.29
     implementation("com.google.mediapipe:tasks-genai:0.10.35")
-    implementation("com.google.mediapipe:tasks-vision:1.0.0")
-    implementation("com.google.mediapipe:tasks-text:1.0.0")
+    implementation("com.google.mediapipe:tasks-vision:1.1.1")
+    implementation("com.google.mediapipe:tasks-text:1.1.1")
 
     // LiteRT-LM: native Kotlin API for .litertlm models (Gemma-3n, Gemma-4, etc.)
     // Replaces tasks-genai for litertlm format models. GPU enabled once 0.10.1 hits Maven.
-    implementation("com.google.ai.edge.litertlm:litertlm-android:0.18.0")
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.18.1")
 
     // LiteRT NPU dispatch libraries for the SoC-specific EmbeddingGemma 2 .litertlm files.
     // Qualcomm also needs QAIRT 2.50 (QNN system API 1.14). The libs in assets/qnnlibs are

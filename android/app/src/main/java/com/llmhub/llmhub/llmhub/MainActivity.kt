@@ -1,6 +1,8 @@
 package com.llmhub.llmhub
 
 import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.view.animation.PathInterpolator
 import androidx.activity.ComponentActivity
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.flow.first
+import com.llmhub.llmhub.data.ThemeMode
 import com.llmhub.llmhub.navigation.LlmHubNavigation
 import com.llmhub.llmhub.ui.theme.LlmHubTheme
 import com.llmhub.llmhub.viewmodels.ChatViewModelFactory
@@ -36,20 +39,44 @@ import com.llmhub.llmhub.debug.ScreenshotHooks
 
 class MainActivity : ComponentActivity() {
     private lateinit var themeViewModel: ThemeViewModel
+
+    /**
+     * Dark status/navigation bar icons on a light app theme, light icons on a dark one. LlmHubTheme
+     * sets this on composition, but on Android 12+ AndroidX's splash remove() re-applies the XML
+     * theme's windowLightStatusBar (unset = light icons) afterwards, which left white icons on the
+     * light theme's white top bar (only the battery outline visible).
+     */
+    private fun applySystemBarAppearance() {
+        if (!::themeViewModel.isInitialized) return
+        val dark = when (themeViewModel.themeMode.value) {
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+            ThemeMode.SYSTEM -> (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        }
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = !dark
+            isAppearanceLightNavigationBars = !dark
+        }
+    }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         // Launch splash (Theme.LlmHub.Starting): ease the icon forward and fade it out while the
         // splash background dissolves into the app, matching the iOS launch animation.
         installSplashScreen().setOnExitAnimationListener { splash ->
             val easing = PathInterpolator(0.4f, 0f, 0.2f, 1f)
-            splash.iconView.animate()
-                .scaleX(1.12f).scaleY(1.12f).alpha(0f)
-                .setDuration(320L).setInterpolator(easing)
-                .start()
+            // Some Android 16 builds (Galaxy S23/S26 Ultra, A17, Lenovo tablets) hand over a splash
+            // without an icon view, and AndroidX's iconView then throws a NullPointerException.
+            runCatching { splash.iconView }.getOrNull()?.animate()
+                ?.scaleX(1.12f)?.scaleY(1.12f)?.alpha(0f)
+                ?.setDuration(320L)?.setInterpolator(easing)
+                ?.start()
             splash.view.animate()
                 .alpha(0f)
                 .setStartDelay(120L).setDuration(380L).setInterpolator(easing)
-                .withEndAction { splash.remove() }
+                .withEndAction {
+                    splash.remove()
+                    applySystemBarAppearance()
+                }
                 .start()
         }
         super.onCreate(savedInstanceState)
@@ -62,7 +89,13 @@ class MainActivity : ComponentActivity() {
         // Initialize ThemeViewModel
         themeViewModel = ThemeViewModel(this)
 
-        WindowCompat.enableEdgeToEdge(window)
+        // Edge-to-edge without Window.setStatusBarColor/setNavigationBarColor (deprecated in
+        // Android 15, and still called by AndroidX's enableEdgeToEdge helpers): Android 15+ draws
+        // edge-to-edge by itself; below that Theme.LlmHub makes the bars transparent and the
+        // window stops fitting system windows. Compose screens handle the insets.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+        }
         setContent {
             val currentThemeMode by themeViewModel.themeMode.collectAsState()
             val currentLanguage by themeViewModel.appLanguage.collectAsState()
